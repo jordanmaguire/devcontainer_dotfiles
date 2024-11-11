@@ -16,6 +16,7 @@ alias ga="git add"
 alias gbr="git branch"
 alias gcom="git co master"
 alias gcop="git co -"
+alias gd="git diff"
 alias gp="git push"
 alias gpl="git pull"
 alias gra="git rebase --abort"
@@ -36,4 +37,3 @@ alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
 #       I can see use for this - maybe it shows the branches in your current tree first and then
 #       other branches after.
 # alias grib="git_smart_rebase"
-
