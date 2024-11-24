@@ -7,6 +7,7 @@ alias ls="ls -AF --color"
 
 # Command line tool shortcuts. I'll be cold in the ground before I type a full command. I need to
 # save my finger bones for deadlifts and video games I can't waste them on keystrokes here.
+alias bs="./bin/start"
 alias cucu="cucumber"
 
 # Git
