@@ -10,8 +10,8 @@ In VS Code
 
 > Settings > Remote [Dev Container]
 
-1. Set "Dotfiles > Repository" to "https://github.com/jordanmaguire/devcontainer_dotfiles"
-2. Set "Dotfiles > Install Command" to "install_dev_container.sh"
+1. Set "Dotfiles > Repository" to `https://github.com/jordanmaguire/devcontainer_dotfiles`
+2. Set "Dotfiles > Install Command" to `install_dev_container.sh`
 
 Restart VS Code and the dotfiles will be installed in the path specified in "Dotfiles > Target Path" which is "~/dotfiles" by default.
 
