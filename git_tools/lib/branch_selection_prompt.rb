@@ -55,7 +55,8 @@ class BranchSelectionPrompt
     puts @prompt_message
     puts
     @branches.each.with_index(1) do |branch_name, position|
-      puts "#{ decorate_string(position.to_s.rjust(3)) }: #{ branch_name }"
+      position_string = position.to_s.rjust(3)
+      puts "#{ decorate_string(position_string) } #{ branch_name }"
     end
     puts
 
