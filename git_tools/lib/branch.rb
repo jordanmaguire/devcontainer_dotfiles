@@ -24,6 +24,10 @@ class Branch
     @current
   end
 
+  def recency_color
+    commit_time_color(last_commit_info.first)
+  end
+
   def prompt_text
     [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")
   end
