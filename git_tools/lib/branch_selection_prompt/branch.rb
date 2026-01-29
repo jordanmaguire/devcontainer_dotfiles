@@ -15,7 +15,7 @@ class BranchSelectionPrompt::Branch
   attr_reader :name
 
   def prompt_text
-    "#{ truncated_name }#{ time_suffix }"
+    [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")
   end
 
   private def truncated_name
@@ -34,7 +34,24 @@ class BranchSelectionPrompt::Branch
     timestamp, relative_time = last_commit_info
     return "" if relative_time.empty?
 
-    " #{decorate_string(relative_time, color: commit_time_color(timestamp))}"
+    decorate_string(relative_time, color: commit_time_color(timestamp))
+  end
+
+  private def unpushed_indicator
+    unless has_upstream?
+      return decorate_string("(no upstream)", color: :light_black)
+    end
+
+    unpushed_count = `git rev-list --count origin/#{ @name }..#{ @name } 2>/dev/null`.strip.to_i
+    if unpushed_count > 0
+      decorate_string("↑#{unpushed_count}", color: :magenta)
+    else
+      ""
+    end
+  end
+
+  private def has_upstream?
+    system("git rev-parse --abbrev-ref #{ @name }@{upstream} >/dev/null 2>&1")
   end
 
   private def last_commit_info
