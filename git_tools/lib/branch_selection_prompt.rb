@@ -4,8 +4,9 @@ rescue LoadError
   # Oh well, we tried.
 end
 
+require_relative "branch"
+
 class BranchSelectionPrompt
-  require_relative "branch_selection_prompt/branch"
   NUMBER_REGEXP = /\A\d+\z/
 
   def initialize(allow_multiple: false, branches:, exclude_protected_branches: false, prompt_message:)

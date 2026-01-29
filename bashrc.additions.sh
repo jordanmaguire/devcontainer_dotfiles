@@ -14,7 +14,6 @@ alias cucu="cucumber"
 # Short for "commits since master".
 alias csm="git log master..HEAD --oneline"
 alias ga="git add"
-alias gbr="git branch"
 alias gcom="git co master"
 alias gcop="git co -"
 alias gd="git diff"
@@ -31,8 +30,9 @@ alias diffupstream="git diff @{upstream}"
 
 # Git Tools - I named these a decade ago. I don't think the names are accurate enough, but
 # I'm not going to waste time renaming them.
-alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
+alias gbr="~/dotfiles/git_tools/git_smart_branch.rb"
 alias gco="~/dotfiles/git_tools/git_smart_checkout.rb"
+alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
 alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
 # TODO: I have no idea where this tool went. I evidently deleted the code for it.
 #       I can see use for this - maybe it shows the branches in your current tree first and then

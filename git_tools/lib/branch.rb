@@ -4,7 +4,7 @@ rescue LoadError
   # Oh well, we tried.
 end
 
-class BranchSelectionPrompt::Branch
+class Branch
   SECONDS_IN_A_DAY = 86400
   MAX_NAME_LENGTH = 50
 
