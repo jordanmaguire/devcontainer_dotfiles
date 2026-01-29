@@ -6,7 +6,7 @@ end
 
 class BranchSelectionPrompt::Branch
   SECONDS_IN_A_DAY = 86400
-  MAX_NAME_LENGTH = 30
+  MAX_NAME_LENGTH = 50
 
   def initialize(name)
     @name = name
