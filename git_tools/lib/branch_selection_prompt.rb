@@ -42,11 +42,34 @@ class BranchSelectionPrompt
     end
   end
 
-  private def decorate_string(string)
-    if string.respond_to?(:cyan)
-      string.cyan
+  private def decorate_string(string, color: :cyan)
+    if string.respond_to?(color)
+      string.send(color)
     else
       string
+    end
+  end
+
+  SECONDS_IN_A_DAY = 86400
+
+  private def last_commit_info(branch_name)
+    output = `git log -1 --format="%ct|%cr" #{ branch_name } 2>/dev/null`.strip
+    return [nil, ""] if output.empty?
+
+    timestamp, relative_time = output.split("|", 2)
+    [timestamp.to_i, relative_time]
+  end
+
+  private def commit_time_color(timestamp)
+    return :light_black if timestamp.nil?
+
+    age_in_seconds = Time.now.to_i - timestamp
+    if age_in_seconds < SECONDS_IN_A_DAY
+      :green
+    elsif age_in_seconds < SECONDS_IN_A_DAY * 7
+      :yellow
+    else
+      :light_black
     end
   end
 
@@ -56,7 +79,9 @@ class BranchSelectionPrompt
     puts
     @branches.each.with_index(1) do |branch_name, position|
       position_string = position.to_s.rjust(3)
-      puts "#{ decorate_string(position_string) } #{ branch_name }"
+      timestamp, relative_time = last_commit_info(branch_name)
+      time_suffix = relative_time.empty? ? "" : " (#{decorate_string(relative_time, color: commit_time_color(timestamp))})"
+      puts "#{ decorate_string(position_string) } #{ branch_name }#{ time_suffix }"
     end
     puts
 
