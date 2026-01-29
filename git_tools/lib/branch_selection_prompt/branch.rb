@@ -6,6 +6,7 @@ end
 
 class BranchSelectionPrompt::Branch
   SECONDS_IN_A_DAY = 86400
+  MAX_NAME_LENGTH = 30
 
   def initialize(name)
     @name = name
@@ -14,7 +15,15 @@ class BranchSelectionPrompt::Branch
   attr_reader :name
 
   def prompt_text
-    "#{ @name }#{ time_suffix }"
+    "#{ truncated_name }#{ time_suffix }"
+  end
+
+  private def truncated_name
+    if @name.length > MAX_NAME_LENGTH
+      @name[0, MAX_NAME_LENGTH - 1] + "…"
+    else
+      @name.ljust(MAX_NAME_LENGTH)
+    end
   end
 
   def last_commit_timestamp
@@ -25,7 +34,7 @@ class BranchSelectionPrompt::Branch
     timestamp, relative_time = last_commit_info
     return "" if relative_time.empty?
 
-    " (#{decorate_string(relative_time, color: commit_time_color(timestamp))})"
+    " #{decorate_string(relative_time, color: commit_time_color(timestamp))}"
   end
 
   private def last_commit_info
