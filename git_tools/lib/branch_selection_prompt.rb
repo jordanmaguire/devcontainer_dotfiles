@@ -5,6 +5,7 @@ rescue LoadError
 end
 
 class BranchSelectionPrompt
+  require_relative "branch_selection_prompt/branch"
   NUMBER_REGEXP = /\A\d+\z/
 
   def initialize(allow_multiple: false, branches:, exclude_protected_branches: false, prompt_message:)
@@ -13,7 +14,7 @@ class BranchSelectionPrompt
     if exclude_protected_branches
       @branches = @branches.reject { ["main", "master"].include?(_1) }
     end
-    @exclude_protected_branches = exclude_protected_branches
+    @branches = @branches.map { Branch.new(_1) }.sort_by { -_1.last_commit_timestamp }
     @prompt_message = decorate_string(prompt_message)
   end
 
@@ -29,8 +30,8 @@ class BranchSelectionPrompt
     branch_names = branch_numbers.map do |branch_number|
       if branch_number =~ NUMBER_REGEXP
         chosen_branch_index = branch_number.to_i - 1
-        if chosen_branch_index != -1 && !(chosen_branch_name = @branches[chosen_branch_index]).nil?
-          chosen_branch_name
+        if chosen_branch_index != -1 && !(chosen_branch = @branches[chosen_branch_index]).nil?
+          chosen_branch.name
         end
       end
     end.compact
@@ -50,38 +51,13 @@ class BranchSelectionPrompt
     end
   end
 
-  SECONDS_IN_A_DAY = 86400
-
-  private def last_commit_info(branch_name)
-    output = `git log -1 --format="%ct|%cr" #{ branch_name } 2>/dev/null`.strip
-    return [nil, ""] if output.empty?
-
-    timestamp, relative_time = output.split("|", 2)
-    [timestamp.to_i, relative_time]
-  end
-
-  private def commit_time_color(timestamp)
-    return :light_black if timestamp.nil?
-
-    age_in_seconds = Time.now.to_i - timestamp
-    if age_in_seconds < SECONDS_IN_A_DAY
-      :green
-    elsif age_in_seconds < SECONDS_IN_A_DAY * 7
-      :yellow
-    else
-      :light_black
-    end
-  end
-
   private def print_prompt_for_branch_selection
     puts
     puts @prompt_message
     puts
-    @branches.each.with_index(1) do |branch_name, position|
+    @branches.each.with_index(1) do |branch, position|
       position_string = position.to_s.rjust(3)
-      timestamp, relative_time = last_commit_info(branch_name)
-      time_suffix = relative_time.empty? ? "" : " (#{decorate_string(relative_time, color: commit_time_color(timestamp))})"
-      puts "#{ decorate_string(position_string) } #{ branch_name }#{ time_suffix }"
+      puts "#{ decorate_string(position_string) } #{ branch.prompt_text }"
     end
     puts
 
