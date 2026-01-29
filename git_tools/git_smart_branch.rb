@@ -6,5 +6,5 @@ require_relative "lib/branch_list"
 parser = BranchParser.new(`git branch`)
 BranchList.new(
   branches: parser.branches,
-  current_branch: parser.current_branch,
+  current_branch_name: parser.current_branch_name,
 ).display
