@@ -7,12 +7,17 @@ end
 class Branch
   SECONDS_IN_A_DAY = 86400
   MAX_NAME_LENGTH = 50
+  PROTECTED_BRANCH_NAMES = ["main", "master"].freeze
 
   def initialize(name)
     @name = name
   end
 
   attr_reader :name
+
+  def protected?
+    PROTECTED_BRANCH_NAMES.include?(@name)
+  end
 
   def prompt_text
     [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")

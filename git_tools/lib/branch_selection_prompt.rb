@@ -13,7 +13,7 @@ class BranchSelectionPrompt
     @allow_multiple = allow_multiple
     @branches = branches
     if exclude_protected_branches
-      @branches = @branches.reject { ["main", "master"].include?(_1.name) }
+      @branches = @branches.reject(&:protected?)
     end
     @branches = @branches.sort_by { -_1.last_commit_timestamp }
     @prompt_message = decorate_string(prompt_message)
