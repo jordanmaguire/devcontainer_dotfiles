@@ -9,14 +9,19 @@ class Branch
   MAX_NAME_LENGTH = 50
   PROTECTED_BRANCH_NAMES = ["main", "master"].freeze
 
-  def initialize(name)
+  def initialize(name, current: false)
     @name = name
+    @current = current
   end
 
   attr_reader :name
 
   def protected?
     PROTECTED_BRANCH_NAMES.include?(@name)
+  end
+
+  def current?
+    @current
   end
 
   def prompt_text

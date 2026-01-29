@@ -58,7 +58,8 @@ class BranchSelectionPrompt
     puts
     @branches.each.with_index(1) do |branch, position|
       position_string = position.to_s.rjust(3)
-      puts "#{ decorate_string(position_string) } #{ branch.prompt_text }"
+      current_indicator = branch.current? ? decorate_string("*", color: :green) : " "
+      puts "#{ current_indicator }#{ decorate_string(position_string) } #{ branch.prompt_text }"
     end
     puts
 

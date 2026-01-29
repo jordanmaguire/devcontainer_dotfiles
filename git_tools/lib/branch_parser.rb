@@ -6,7 +6,8 @@ class BranchParser
   end
 
   def branches
-    branch_names.map { Branch.new(_1) }
+    current = current_branch_name
+    branch_names.map { Branch.new(_1, current: _1 == current) }
   end
 
   def current_branch_name

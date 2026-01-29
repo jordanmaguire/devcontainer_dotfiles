@@ -7,15 +7,14 @@ end
 require_relative "branch"
 
 class BranchList
-  def initialize(branches:, current_branch_name:)
+  def initialize(branches:)
     @branches = branches.sort_by { -_1.last_commit_timestamp }
-    @current_branch_name = current_branch_name
   end
 
   def display
     puts
     @branches.each do |branch|
-      indicator = branch.name == @current_branch_name ? "*" : " "
+      indicator = branch.current? ? "*" : " "
       puts "#{ decorate_string(indicator, color: :green) } #{ branch.prompt_text }"
     end
     puts
