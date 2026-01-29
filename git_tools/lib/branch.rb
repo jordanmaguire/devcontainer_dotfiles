@@ -29,11 +29,13 @@ class Branch
   end
 
   private def truncated_name
-    if @name.length > MAX_NAME_LENGTH
+    name_text = if @name.length > MAX_NAME_LENGTH
       @name[0, MAX_NAME_LENGTH - 1] + "…"
     else
       @name.ljust(MAX_NAME_LENGTH)
     end
+
+    current? ? decorate_string(name_text, color: commit_time_color(last_commit_info.first)) : name_text
   end
 
   def last_commit_timestamp
