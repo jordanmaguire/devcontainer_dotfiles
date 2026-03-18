@@ -48,5 +48,5 @@ puts
 
 # Prompt the user to delete any of the branches that are merged into the
 # current branch
-branches = BranchParser.new(`git branch --merged`).branch_names
+branches = BranchParser.new(`git branch --merged`).branches.map(&:name)
 BranchDeletionPrompt.new(branches).prompt_to_delete_merged_branches
