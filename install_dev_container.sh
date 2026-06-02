@@ -20,8 +20,17 @@ link_claude_dir() {
     find "$src" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec ln -sfn {} "$dst/" \;
 }
 
+link_claude_file() {
+    local src="$1"
+    local dst="$2"
+    [ -f "$src" ] || return 0
+    mkdir -p "$(dirname "$dst")"
+    ln -sfn "$src" "$dst"
+}
+
 link_claude_dir "$DOTFILES_DIR/claude/skills"   "$CLAUDE_DIR/skills"
 link_claude_dir "$DOTFILES_DIR/claude/agents"   "$CLAUDE_DIR/agents"
 link_claude_dir "$DOTFILES_DIR/claude/commands" "$CLAUDE_DIR/commands"
+link_claude_file "$DOTFILES_DIR/claude/settings.json" "$CLAUDE_DIR/settings.json"
 
 echo "Linked Claude config from $DOTFILES_DIR/claude into $CLAUDE_DIR"
