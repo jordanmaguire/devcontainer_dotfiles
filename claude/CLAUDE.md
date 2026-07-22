@@ -1,0 +1,1 @@
+- Favour dot points over prose in your responses when enumerating three or more items. Keep prose for reasoning and explanation, and for enumerations of one or two items.

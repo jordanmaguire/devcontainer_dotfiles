@@ -32,5 +32,6 @@ link_claude_dir "$DOTFILES_DIR/claude/skills"   "$CLAUDE_DIR/skills"
 link_claude_dir "$DOTFILES_DIR/claude/agents"   "$CLAUDE_DIR/agents"
 link_claude_dir "$DOTFILES_DIR/claude/commands" "$CLAUDE_DIR/commands"
 link_claude_file "$DOTFILES_DIR/claude/settings.json" "$CLAUDE_DIR/settings.json"
+link_claude_file "$DOTFILES_DIR/claude/CLAUDE.md"     "$CLAUDE_DIR/CLAUDE.md"
 
 echo "Linked Claude config from $DOTFILES_DIR/claude into $CLAUDE_DIR"
