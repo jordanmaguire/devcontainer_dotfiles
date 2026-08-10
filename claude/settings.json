@@ -10,5 +10,7 @@
       "/tmp"
     ]
   },
-  "effortLevel": "max"
+  "agentPushNotifEnabled": true,
+  "effortLevel": "max",
+  "model": "claude-opus-4-8"
 }
