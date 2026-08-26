@@ -2,9 +2,7 @@
   "permissions": {
     "allow": [],
     "deny": [
-      "Bash(git push:*)",
-      "Bash(git checkout:*)",
-      "Bash(git switch:*)"
+      "Bash(git push:*)"
     ],
     "additionalDirectories": [
       "/tmp"
