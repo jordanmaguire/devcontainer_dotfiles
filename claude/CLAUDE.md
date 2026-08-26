@@ -1,1 +1,2 @@
 - Favour dot points over prose in your responses when enumerating three or more items. Keep prose for reasoning and explanation, and for enumerations of one or two items.
+- Do not run rubocop - it rarely yields anything of value and it almost always slows down delivery
