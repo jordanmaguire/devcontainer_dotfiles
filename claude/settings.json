@@ -8,8 +8,12 @@
       "/tmp"
     ]
   },
-  "agentPushNotifEnabled": true,
-  "effortLevel": "max",
   "model": "opus[1m]",
-  "remoteControlAtStartup": false
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  }
 }
