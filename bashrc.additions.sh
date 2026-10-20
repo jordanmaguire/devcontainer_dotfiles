@@ -11,8 +11,9 @@ alias bs="./bin/start"
 alias cucu="cucumber"
 
 # Git
-# Short for "commits since master".
-alias csm="git log master..HEAD --oneline"
+# Short for "commits since master". Measured against the branch's PR base or origin's default
+# branch, since a local master is stale in a worktree.
+alias csm='git log "$(~/dotfiles/git_tools/git_base_branch.rb)"..HEAD --oneline'
 alias ga="git add"
 alias gcom="git co master"
 alias gcop="git co -"
@@ -25,7 +26,7 @@ alias grc="git rebase --continue"
 alias grs="git rebase --skip"
 alias grb="git rebase --committer-date-is-author-date"
 alias gri="git rebase -i"
-alias grim="git rebase -i master"
+alias grim='git rebase -i "$(~/dotfiles/git_tools/git_base_branch.rb)"'
 alias gst="git status"
 alias diffupstream="git diff @{upstream}"
 

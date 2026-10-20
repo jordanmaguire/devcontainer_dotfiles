@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 
+require_relative "lib/base_branch"
 require_relative "lib/git"
 require_relative "lib/style"
 
 class CommitLog
   def initialize
-    @base_branch = detect_base_branch
+    @base_branch = BaseBranch.for_branch
   end
 
   def display
@@ -22,14 +23,6 @@ class CommitLog
   end
 
   private
-
-  def detect_base_branch
-    %w[main master].find { |branch| branch_exists?(branch) } || "main"
-  end
-
-  def branch_exists?(branch)
-    Git.ok?("rev-parse", "--verify", branch)
-  end
 
   def branch_commits
     Git.read("log", "#{@base_branch}..HEAD", "--format=%h|%cr|%s").split("\n").reject(&:empty?)
