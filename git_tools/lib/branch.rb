@@ -75,7 +75,8 @@ class Branch
     @timestamp
   end
 
-  def prompt_text
+  def prompt_text(show_worktree: checked_out_elsewhere?)
+    worktree_text = show_worktree && @worktree ? @worktree.status_text : ""
     [truncated_name, time_suffix, unpushed_indicator, worktree_text].reject(&:empty?).join(" ")
   end
 
@@ -107,10 +108,6 @@ class Branch
     else
       ""
     end
-  end
-
-  private def worktree_text
-    checked_out_elsewhere? ? @worktree.status_text : ""
   end
 
   private def commit_time_color(timestamp)

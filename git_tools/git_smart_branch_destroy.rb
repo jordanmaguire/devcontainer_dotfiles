@@ -1,17 +1,18 @@
 #!/usr/bin/env ruby
 
 require_relative "lib/branch"
-require_relative "lib/branch_selection_prompt"
 require_relative "lib/git"
+require_relative "lib/selection_prompt"
 
-branches = Branch.all
+branches = Branch.all.reject(&:protected?)
 selected_branches =
-  BranchSelectionPrompt.new(
+  SelectionPrompt.new(
     allow_multiple: true,
-    branches: branches,
-    exclude_protected_branches: true,
+    choices: branches,
+    noun: "branch",
+    plural_noun: "branches",
     prompt_message: "Destroy one or more branches:",
-  ).prompt_for_branch_selection
+  ).prompt_for_selection
 
 puts
 if !selected_branches.nil? && selected_branches.any?

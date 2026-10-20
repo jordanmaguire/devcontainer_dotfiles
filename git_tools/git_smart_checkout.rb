@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
 require_relative "lib/branch"
-require_relative "lib/branch_selection_prompt"
 require_relative "lib/git"
+require_relative "lib/selection_prompt"
 
 # The gco shell function cds into whatever this prints, so everything else goes to stderr.
 path_output = $stdout
@@ -10,10 +10,12 @@ $stdout = $stderr
 
 branches = Branch.all
 selected_branch =
-  BranchSelectionPrompt.new(
-    branches: branches,
+  SelectionPrompt.new(
+    choices: branches,
+    noun: "branch",
+    plural_noun: "branches",
     prompt_message: "Checkout a branch:",
-  ).prompt_for_branch_selection
+  ).prompt_for_selection
 
 puts
 if selected_branch.nil?

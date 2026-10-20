@@ -53,6 +53,7 @@ __git_tool_cd() {
 # A shell that has already sourced the old gco alias would expand it inside the definition.
 unalias gco 2>/dev/null
 gco() { __git_tool_cd ~/dotfiles/git_tools/git_smart_checkout.rb "$@"; }
+gwl() { __git_tool_cd ~/dotfiles/git_tools/git_smart_worktree_switch.rb "$@"; }
 
 # Repair stale VS Code IPC socket so `code --wait` (git's editor) works in
 # long-lived shells whose original VS Code window has since closed. Without
