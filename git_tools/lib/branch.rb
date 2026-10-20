@@ -12,6 +12,7 @@ class Branch
     "committerdate:relative",
     "push:short",
     "push:track",
+    "upstream:track",
     "worktreepath",
   ].freeze
 
@@ -37,6 +38,7 @@ class Branch
     @relative_time = fields["committerdate:relative"].to_s
     @push = fields["push:short"].to_s
     @push_track = fields["push:track"].to_s
+    @upstream_track = fields["upstream:track"].to_s
     @worktree = worktree
   end
 
@@ -49,6 +51,12 @@ class Branch
 
   def current?
     @current
+  end
+
+  # The remote branch was deleted, which usually means its PR was merged, perhaps by squashing,
+  # which `--merged` cannot detect.
+  def upstream_gone?
+    @upstream_track == "[gone]"
   end
 
   # git refuses to check out or delete a branch that another worktree has checked out.
