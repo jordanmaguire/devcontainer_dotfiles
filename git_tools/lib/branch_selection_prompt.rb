@@ -10,7 +10,6 @@ class BranchSelectionPrompt
     if exclude_protected_branches
       @branches = @branches.reject(&:protected?)
     end
-    @branches = @branches.sort_by { -_1.last_commit_timestamp }
     @prompt_message = Style.decorate(prompt_message)
   end
 

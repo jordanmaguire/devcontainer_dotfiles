@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative "lib/branch_parser"
+require_relative "lib/branch"
 require_relative "lib/git"
 
 class BranchDeletionPrompt
@@ -47,5 +47,5 @@ puts
 
 # Prompt the user to delete any of the branches that are merged into the
 # current branch
-branches = BranchParser.new(Git.read("branch", "--merged")).branches.map(&:name)
+branches = Branch.all(merged: "HEAD").map(&:name)
 BranchDeletionPrompt.new(branches).prompt_to_delete_merged_branches

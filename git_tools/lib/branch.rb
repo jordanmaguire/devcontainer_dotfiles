@@ -4,10 +4,35 @@ require_relative "style"
 class Branch
   SECONDS_IN_A_DAY = 86400
   MAX_NAME_LENGTH = 50
+  FIELDS = [
+    "HEAD",
+    "refname:short",
+    "committerdate:unix",
+    "committerdate:relative",
+    "push:short",
+    "push:track",
+    "worktreepath",
+  ].freeze
 
-  def initialize(name, current: false)
-    @name = name
-    @current = current
+  # Every local branch, most recently committed first. One for-each-ref call replaces parsing
+  # `git branch`, whose "+ " prefix for branches in other worktrees broke every tool, and the
+  # three git calls each branch used to make for its age and push state.
+  def self.all(merged: nil)
+    args = ["for-each-ref", "--sort=-committerdate", "--format=#{ FIELDS.map { "%(#{ _1 })" }.join("%00") }"]
+    args << "--merged=#{ merged }" if merged
+    Git.run(*args, "refs/heads").stdout.each_line(chomp: true).map do |line|
+      new(FIELDS.zip(line.split("\0", -1)).to_h)
+    end
+  end
+
+  def initialize(fields)
+    @current = fields["HEAD"] == "*"
+    @name = fields["refname:short"]
+    @timestamp = fields["committerdate:unix"].to_i
+    @relative_time = fields["committerdate:relative"].to_s
+    @push = fields["push:short"].to_s
+    @push_track = fields["push:track"].to_s
+    @worktree_path = fields["worktreepath"].to_s
   end
 
   attr_reader :name
@@ -20,8 +45,17 @@ class Branch
     @current
   end
 
+  # Where the branch is checked out, if anywhere. Includes the current worktree.
+  def worktree_path
+    @worktree_path unless @worktree_path.empty?
+  end
+
   def recency_color
-    commit_time_color(last_commit_info.first)
+    commit_time_color(@timestamp)
+  end
+
+  def last_commit_timestamp
+    @timestamp
   end
 
   def prompt_text
@@ -35,51 +69,31 @@ class Branch
       @name.ljust(MAX_NAME_LENGTH)
     end
 
-    current? ? Style.decorate(name_text, color: commit_time_color(last_commit_info.first)) : name_text
-  end
-
-  def last_commit_timestamp
-    last_commit_info.first || 0
+    current? ? Style.decorate(name_text, color: recency_color) : name_text
   end
 
   private def time_suffix
-    timestamp, relative_time = last_commit_info
-    return "" if relative_time.empty?
+    return "" if @relative_time.empty?
 
-    Style.decorate(relative_time, color: commit_time_color(timestamp))
+    Style.decorate(@relative_time, color: recency_color)
   end
 
+  # Measured against where `git push` would send the branch, so a branch whose upstream is
+  # origin/master is not reported as fully pushed.
   private def unpushed_indicator
-    unless has_upstream?
-      return Style.decorate("(no upstream)", color: :light_black)
-    end
-
-    unpushed_count = Git.read("rev-list", "--count", "origin/#{ @name }..#{ @name }").to_i
-    if unpushed_count > 0
-      Style.decorate("↑#{unpushed_count}", color: :magenta)
+    if @push.empty?
+      Style.decorate("(no upstream)", color: :light_black)
+    elsif @push_track == "[gone]"
+      Style.decorate("(gone)", color: :light_black)
+    elsif (unpushed_count = @push_track[/ahead (\d+)/, 1].to_i) > 0
+      Style.decorate("↑#{ unpushed_count }", color: :magenta)
     else
       ""
     end
   end
 
-  private def has_upstream?
-    Git.ok?("rev-parse", "--abbrev-ref", "#{ @name }@{upstream}")
-  end
-
-  private def last_commit_info
-    @last_commit_info ||= begin
-      output = Git.read("log", "-1", "--format=%ct|%cr", @name)
-      if output.empty?
-        [nil, ""]
-      else
-        timestamp, relative_time = output.split("|", 2)
-        [timestamp.to_i, relative_time]
-      end
-    end
-  end
-
   private def commit_time_color(timestamp)
-    return :light_black if timestamp.nil?
+    return :light_black if timestamp.zero?
 
     age_in_seconds = Time.now.to_i - timestamp
     if age_in_seconds < SECONDS_IN_A_DAY * 7
