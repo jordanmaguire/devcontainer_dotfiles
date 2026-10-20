@@ -7,6 +7,7 @@ class Branch
   MAX_NAME_LENGTH = 50
   FIELDS = [
     "HEAD",
+    "refname",
     "refname:short",
     "committerdate:unix",
     "committerdate:relative",
@@ -19,11 +20,11 @@ class Branch
   # Every local branch, most recently committed first. One for-each-ref call replaces parsing
   # `git branch`, whose "+ " prefix for branches in other worktrees broke every tool, and the
   # three git calls each branch used to make for its age and push state.
-  def self.all(merged: nil)
+  def self.all(merged: nil, refs: "refs/heads")
     worktrees_by_path = Worktree.all.to_h { [_1.path, _1] }
     args = ["for-each-ref", "--sort=-committerdate", "--format=#{ FIELDS.map { "%(#{ _1 })" }.join("%00") }"]
     args << "--merged=#{ merged }" if merged
-    branches = Git.run(*args, "refs/heads").stdout.each_line(chomp: true).map do |line|
+    branches = Git.run(*args, refs).stdout.each_line(chomp: true).map do |line|
       fields = FIELDS.zip(line.split("\0", -1)).to_h
       new(fields, worktree: worktrees_by_path[fields["worktreepath"]])
     end
@@ -33,6 +34,7 @@ class Branch
 
   def initialize(fields, worktree: nil)
     @current = fields["HEAD"] == "*"
+    @remote = fields["refname"].to_s.start_with?("refs/remotes/")
     @name = fields["refname:short"]
     @timestamp = fields["committerdate:unix"].to_i
     @relative_time = fields["committerdate:relative"].to_s
@@ -107,7 +109,9 @@ class Branch
   # Measured against where `git push` would send the branch, so a branch whose upstream is
   # origin/master is not reported as fully pushed.
   private def unpushed_indicator
-    if @push.empty?
+    if @remote
+      ""
+    elsif @push.empty?
       Style.decorate("(no upstream)", color: :light_black)
     elsif @push_track == "[gone]"
       Style.decorate("(gone)", color: :light_black)

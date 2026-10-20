@@ -36,10 +36,7 @@ alias gbr="~/dotfiles/git_tools/git_smart_branch.rb"
 alias gsl="~/dotfiles/git_tools/git_smart_log.rb"
 alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
 alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
-# TODO: I have no idea where this tool went. I evidently deleted the code for it.
-#       I can see use for this - maybe it shows the branches in your current tree first and then
-#       other branches after.
-# alias grib="git_smart_rebase"
+alias grib="~/dotfiles/git_tools/git_smart_rebase.rb"
 
 # Tools that can take you to another worktree print its path for these functions to cd into,
 # since a script cannot change its parent shell's directory.
