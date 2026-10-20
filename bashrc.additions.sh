@@ -15,7 +15,17 @@ alias cucu="cucumber"
 # branch, since a local master is stale in a worktree.
 alias csm='git log "$(~/dotfiles/git_tools/git_base_branch.rb)"..HEAD --oneline'
 alias ga="git add"
-alias gcom="git co master"
+# git refuses to check out master while another worktree has it, so go to that worktree instead.
+unalias gcom 2>/dev/null
+gcom() {
+  local dir
+  dir=$(git for-each-ref --format='%(worktreepath)' refs/heads/master) || return
+  if [ -n "$dir" ]; then
+    cd "$dir" || return
+  else
+    git co master
+  fi
+}
 alias gcop="git co -"
 alias gd="git diff"
 alias gl="git log"
