@@ -33,7 +33,6 @@ alias diffupstream="git diff @{upstream}"
 # Git Tools - I named these a decade ago. I don't think the names are accurate enough, but
 # I'm not going to waste time renaming them.
 alias gbr="~/dotfiles/git_tools/git_smart_branch.rb"
-alias gco="~/dotfiles/git_tools/git_smart_checkout.rb"
 alias gsl="~/dotfiles/git_tools/git_smart_log.rb"
 alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
 alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
@@ -41,6 +40,19 @@ alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
 #       I can see use for this - maybe it shows the branches in your current tree first and then
 #       other branches after.
 # alias grib="git_smart_rebase"
+
+# Tools that can take you to another worktree print its path for these functions to cd into,
+# since a script cannot change its parent shell's directory.
+__git_tool_cd() {
+  local dir
+  dir=$("$@") || return
+  if [ -n "$dir" ]; then
+    cd "$dir" || return
+  fi
+}
+# A shell that has already sourced the old gco alias would expand it inside the definition.
+unalias gco 2>/dev/null
+gco() { __git_tool_cd ~/dotfiles/git_tools/git_smart_checkout.rb "$@"; }
 
 # Repair stale VS Code IPC socket so `code --wait` (git's editor) works in
 # long-lived shells whose original VS Code window has since closed. Without

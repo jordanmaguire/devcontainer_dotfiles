@@ -22,19 +22,19 @@ class BranchSelectionPrompt
       user_input = Prompt.read_line
       return if user_input.nil? || user_input.empty? || user_input.downcase == "c"
 
-      branch_names, error = get_branch_names_from_user_input(user_input)
+      branches, error = get_branches_from_user_input(user_input)
       if error
         puts Style.decorate(error, color: :red)
       elsif @allow_multiple
-        return branch_names
+        return branches
       else
-        return branch_names.first
+        return branches.first
       end
     end
   end
 
-  # Returns the chosen branch names, or an error message describing what was wrong.
-  private def get_branch_names_from_user_input(user_input)
+  # Returns the chosen branches, or an error message describing what was wrong.
+  private def get_branches_from_user_input(user_input)
     branch_numbers = user_input.split(" ")
     if !@allow_multiple && branch_numbers.length > 1
       return [nil, "Type a single number."]
@@ -45,7 +45,7 @@ class BranchSelectionPrompt
       return [nil, "No branch numbered #{ invalid_numbers.join(", ") }."]
     end
 
-    [branch_numbers.map { @branches[_1.to_i - 1].name }.uniq, nil]
+    [branch_numbers.map { @branches[_1.to_i - 1] }.uniq, nil]
   end
 
   private def valid_branch_number?(branch_number)

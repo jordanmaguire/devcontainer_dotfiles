@@ -15,7 +15,7 @@ selected_branches =
 
 puts
 if !selected_branches.nil? && selected_branches.any?
-  selected_branches.each do |selected_branch|
+  selected_branches.map(&:name).each do |selected_branch|
     result = Git.run("branch", "-D", selected_branch)
     if result.success?
       puts "Destroyed #{selected_branch}"
