@@ -2,6 +2,7 @@
 
 require_relative "lib/branch"
 require_relative "lib/git"
+require_relative "lib/prompt"
 
 class BranchDeletionPrompt
   def initialize(branches)
@@ -26,9 +27,7 @@ class BranchDeletionPrompt
       puts "  #{ branch_name }"
     end
     puts
-    # Use print rather than puts so that the number the user types show on the same line
-    print "Type 'y' to delete these branches, or anything else to cancel: "
-    gets.strip == "y"
+    Prompt.confirm?("Type 'y' to delete these branches, or anything else to cancel:")
   end
 
   private def delete_branches(deleteable_branches)
