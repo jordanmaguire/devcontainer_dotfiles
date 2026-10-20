@@ -1,5 +1,4 @@
 require_relative "branch"
-require_relative "style"
 
 class BranchList
   def initialize(branches:)
@@ -9,8 +8,7 @@ class BranchList
   def display
     puts
     @branches.each do |branch|
-      indicator = branch.current? ? "*" : " "
-      puts "#{ Style.decorate(indicator, color: :green) } #{ branch.prompt_text }"
+      puts "#{ branch.indicator } #{ branch.prompt_text }"
     end
     puts
   end

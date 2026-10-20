@@ -59,8 +59,7 @@ class BranchSelectionPrompt
     @branches.each.with_index(1) do |branch, position|
       position_string = position.to_s.rjust(3)
       position_color = branch.current? ? branch.recency_color : :cyan
-      current_indicator = branch.current? ? Style.decorate("*", color: branch.recency_color) : " "
-      puts "#{ current_indicator }#{ Style.decorate(position_string, color: position_color) } #{ branch.prompt_text }"
+      puts "#{ branch.indicator }#{ Style.decorate(position_string, color: position_color) } #{ branch.prompt_text }"
     end
     puts
   end

@@ -1,5 +1,6 @@
 require_relative "git"
 require_relative "style"
+require_relative "worktree"
 
 class Branch
   SECONDS_IN_A_DAY = 86400
@@ -18,24 +19,29 @@ class Branch
   # `git branch`, whose "+ " prefix for branches in other worktrees broke every tool, and the
   # three git calls each branch used to make for its age and push state.
   def self.all(merged: nil)
+    worktrees_by_path = Worktree.all.to_h { [_1.path, _1] }
     args = ["for-each-ref", "--sort=-committerdate", "--format=#{ FIELDS.map { "%(#{ _1 })" }.join("%00") }"]
     args << "--merged=#{ merged }" if merged
-    Git.run(*args, "refs/heads").stdout.each_line(chomp: true).map do |line|
-      new(FIELDS.zip(line.split("\0", -1)).to_h)
+    branches = Git.run(*args, "refs/heads").stdout.each_line(chomp: true).map do |line|
+      fields = FIELDS.zip(line.split("\0", -1)).to_h
+      new(fields, worktree: worktrees_by_path[fields["worktreepath"]])
     end
+    Worktree.load_statuses(branches.select(&:checked_out_elsewhere?).map(&:worktree))
+    branches
   end
 
-  def initialize(fields)
+  def initialize(fields, worktree: nil)
     @current = fields["HEAD"] == "*"
     @name = fields["refname:short"]
     @timestamp = fields["committerdate:unix"].to_i
     @relative_time = fields["committerdate:relative"].to_s
     @push = fields["push:short"].to_s
     @push_track = fields["push:track"].to_s
-    @worktree_path = fields["worktreepath"].to_s
+    @worktree = worktree
   end
 
-  attr_reader :name
+  # The worktree the branch is checked out in, if any. Includes the current one.
+  attr_reader :name, :worktree
 
   def protected?
     Git::PROTECTED_BRANCH_NAMES.include?(@name)
@@ -45,9 +51,20 @@ class Branch
     @current
   end
 
-  # Where the branch is checked out, if anywhere. Includes the current worktree.
-  def worktree_path
-    @worktree_path unless @worktree_path.empty?
+  # git refuses to check out or delete a branch that another worktree has checked out.
+  def checked_out_elsewhere?
+    !@worktree.nil? && !current?
+  end
+
+  # Marks the current branch with *, and branches in other worktrees with + as `git branch` does.
+  def indicator
+    if current?
+      Style.decorate("*", color: recency_color)
+    elsif checked_out_elsewhere?
+      Style.decorate("+", color: :blue)
+    else
+      " "
+    end
   end
 
   def recency_color
@@ -59,7 +76,7 @@ class Branch
   end
 
   def prompt_text
-    [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")
+    [truncated_name, time_suffix, unpushed_indicator, worktree_text].reject(&:empty?).join(" ")
   end
 
   private def truncated_name
@@ -90,6 +107,10 @@ class Branch
     else
       ""
     end
+  end
+
+  private def worktree_text
+    checked_out_elsewhere? ? @worktree.status_text : ""
   end
 
   private def commit_time_color(timestamp)
