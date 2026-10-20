@@ -1,10 +1,5 @@
-begin
-  require "colorize"
-rescue LoadError
-  # Oh well, we tried.
-end
-
 require_relative "branch"
+require_relative "style"
 
 class BranchSelectionPrompt
   NUMBER_REGEXP = /\A\d+\z/
@@ -16,7 +11,7 @@ class BranchSelectionPrompt
       @branches = @branches.reject(&:protected?)
     end
     @branches = @branches.sort_by { -_1.last_commit_timestamp }
-    @prompt_message = decorate_string(prompt_message)
+    @prompt_message = Style.decorate(prompt_message)
   end
 
   def prompt_for_branch_selection
@@ -44,14 +39,6 @@ class BranchSelectionPrompt
     end
   end
 
-  private def decorate_string(string, color: :cyan)
-    if string.respond_to?(color)
-      string.send(color)
-    else
-      string
-    end
-  end
-
   private def print_prompt_for_branch_selection
     puts
     puts @prompt_message
@@ -59,16 +46,16 @@ class BranchSelectionPrompt
     @branches.each.with_index(1) do |branch, position|
       position_string = position.to_s.rjust(3)
       position_color = branch.current? ? branch.recency_color : :cyan
-      current_indicator = branch.current? ? decorate_string("*", color: branch.recency_color) : " "
-      puts "#{ current_indicator }#{ decorate_string(position_string, color: position_color) } #{ branch.prompt_text }"
+      current_indicator = branch.current? ? Style.decorate("*", color: branch.recency_color) : " "
+      puts "#{ current_indicator }#{ Style.decorate(position_string, color: position_color) } #{ branch.prompt_text }"
     end
     puts
 
     # Use print rather than puts so that the number(s) the user types shows on the same line
     if @allow_multiple
-      print decorate_string("Type the number(s) of the branch(es), type c to cancel: ")
+      print Style.decorate("Type the number(s) of the branch(es), type c to cancel: ")
     else
-      print decorate_string("Type the number of the branch, type c to cancel: ")
+      print Style.decorate("Type the number of the branch, type c to cancel: ")
     end
   end
 end

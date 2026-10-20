@@ -1,16 +1,15 @@
 #!/usr/bin/env ruby
 
 require_relative "lib/branch_parser"
+require_relative "lib/git"
 
 class BranchDeletionPrompt
-  RESERVED_BRANCHES = ["main", "master"]
-
   def initialize(branches)
     @branches = branches
   end
 
   def prompt_to_delete_merged_branches
-    deleteable_branches = @branches - RESERVED_BRANCHES
+    deleteable_branches = @branches - Git::PROTECTED_BRANCH_NAMES
     if deleteable_branches.any?
       if (ok_to_delete = prompt_to_delete_branches(deleteable_branches))
         delete_branches(deleteable_branches)
@@ -34,19 +33,19 @@ class BranchDeletionPrompt
 
   private def delete_branches(deleteable_branches)
     deleteable_branches.each do |branch_name|
-      command = "git branch -d #{ branch_name }"
-      puts "#{ command }"
-      `#{ command }`
+      puts "git branch -d #{ branch_name }"
+      result = Git.run("branch", "-d", branch_name)
+      puts "  #{ result.message }" unless result.success?
     end
   end
 end
 
 # Run `git remote prune origin` first to delete any remote references to the
 # branches we have checked out locally that have already been deleted
-`git remote prune origin`
+Git.run("remote", "prune", "origin")
 puts
 
 # Prompt the user to delete any of the branches that are merged into the
 # current branch
-branches = BranchParser.new(`git branch --merged`).branches.map(&:name)
+branches = BranchParser.new(Git.read("branch", "--merged")).branches.map(&:name)
 BranchDeletionPrompt.new(branches).prompt_to_delete_merged_branches

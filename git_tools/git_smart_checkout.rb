@@ -2,8 +2,9 @@
 
 require_relative "lib/branch_parser"
 require_relative "lib/branch_selection_prompt"
+require_relative "lib/git"
 
-branches = BranchParser.new(`git branch`).branches
+branches = BranchParser.new(Git.read("branch")).branches
 selected_branch =
   BranchSelectionPrompt.new(
     branches: branches,
@@ -12,5 +13,7 @@ selected_branch =
 
 puts
 if selected_branch
-  `git checkout #{ selected_branch }`
+  result = Git.run("checkout", selected_branch)
+  puts result.message unless result.message.empty?
+  exit(1) unless result.success?
 end

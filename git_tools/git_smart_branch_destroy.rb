@@ -2,8 +2,9 @@
 
 require_relative "lib/branch_parser"
 require_relative "lib/branch_selection_prompt"
+require_relative "lib/git"
 
-branches = BranchParser.new(`git branch`).branches
+branches = BranchParser.new(Git.read("branch")).branches
 selected_branches =
   BranchSelectionPrompt.new(
     allow_multiple: true,
@@ -15,7 +16,11 @@ selected_branches =
 puts
 if !selected_branches.nil? && selected_branches.any?
   selected_branches.each do |selected_branch|
-    `git branch -D #{selected_branch}`
-    puts "Destroyed #{selected_branch}"
+    result = Git.run("branch", "-D", selected_branch)
+    if result.success?
+      puts "Destroyed #{selected_branch}"
+    else
+      puts "Could not destroy #{selected_branch}: #{result.message}"
+    end
   end
 end

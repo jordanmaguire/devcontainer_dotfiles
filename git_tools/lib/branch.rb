@@ -1,13 +1,9 @@
-begin
-  require "colorize"
-rescue LoadError
-  # Oh well, we tried.
-end
+require_relative "git"
+require_relative "style"
 
 class Branch
   SECONDS_IN_A_DAY = 86400
   MAX_NAME_LENGTH = 50
-  PROTECTED_BRANCH_NAMES = ["main", "master"].freeze
 
   def initialize(name, current: false)
     @name = name
@@ -17,7 +13,7 @@ class Branch
   attr_reader :name
 
   def protected?
-    PROTECTED_BRANCH_NAMES.include?(@name)
+    Git::PROTECTED_BRANCH_NAMES.include?(@name)
   end
 
   def current?
@@ -39,7 +35,7 @@ class Branch
       @name.ljust(MAX_NAME_LENGTH)
     end
 
-    current? ? decorate_string(name_text, color: commit_time_color(last_commit_info.first)) : name_text
+    current? ? Style.decorate(name_text, color: commit_time_color(last_commit_info.first)) : name_text
   end
 
   def last_commit_timestamp
@@ -50,29 +46,29 @@ class Branch
     timestamp, relative_time = last_commit_info
     return "" if relative_time.empty?
 
-    decorate_string(relative_time, color: commit_time_color(timestamp))
+    Style.decorate(relative_time, color: commit_time_color(timestamp))
   end
 
   private def unpushed_indicator
     unless has_upstream?
-      return decorate_string("(no upstream)", color: :light_black)
+      return Style.decorate("(no upstream)", color: :light_black)
     end
 
-    unpushed_count = `git rev-list --count origin/#{ @name }..#{ @name } 2>/dev/null`.strip.to_i
+    unpushed_count = Git.read("rev-list", "--count", "origin/#{ @name }..#{ @name }").to_i
     if unpushed_count > 0
-      decorate_string("↑#{unpushed_count}", color: :magenta)
+      Style.decorate("↑#{unpushed_count}", color: :magenta)
     else
       ""
     end
   end
 
   private def has_upstream?
-    system("git rev-parse --abbrev-ref #{ @name }@{upstream} >/dev/null 2>&1")
+    Git.ok?("rev-parse", "--abbrev-ref", "#{ @name }@{upstream}")
   end
 
   private def last_commit_info
     @last_commit_info ||= begin
-      output = `git log -1 --format="%ct|%cr" #{ @name } 2>/dev/null`.strip
+      output = Git.read("log", "-1", "--format=%ct|%cr", @name)
       if output.empty?
         [nil, ""]
       else
@@ -92,14 +88,6 @@ class Branch
       :yellow
     else
       :light_black
-    end
-  end
-
-  private def decorate_string(string, color: :cyan)
-    if string.respond_to?(color)
-      string.send(color)
-    else
-      string
     end
   end
 end

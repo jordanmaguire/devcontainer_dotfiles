@@ -1,10 +1,7 @@
 #!/usr/bin/env ruby
 
-begin
-  require "colorize"
-rescue LoadError
-  # Oh well, we tried.
-end
+require_relative "lib/git"
+require_relative "lib/style"
 
 class CommitLog
   def initialize
@@ -31,23 +28,23 @@ class CommitLog
   end
 
   def branch_exists?(branch)
-    system("git rev-parse --verify #{branch} >/dev/null 2>&1")
+    Git.ok?("rev-parse", "--verify", branch)
   end
 
   def branch_commits
-    `git log #{@base_branch}..HEAD --format="%h|%cr|%s" 2>/dev/null`.strip.split("\n").reject(&:empty?)
+    Git.read("log", "#{@base_branch}..HEAD", "--format=%h|%cr|%s").split("\n").reject(&:empty?)
   end
 
   def display_commit(commit_line)
     sha, time, message = commit_line.split("|", 3)
 
-    puts "#{decorate(sha, :yellow)} #{decorate(time, :green)} #{decorate(message, :cyan)}"
+    puts "#{Style.decorate(sha, color: :yellow)} #{Style.decorate(time, color: :green)} #{Style.decorate(message, color: :cyan)}"
     puts diff_stat(sha)
     puts
   end
 
   def diff_stat(sha)
-    raw_stat = `git diff --stat #{sha}^..#{sha} 2>/dev/null`.strip
+    raw_stat = Git.read("diff", "--stat", "#{sha}^..#{sha}")
     align_diff_stat(raw_stat)
   end
 
@@ -83,21 +80,13 @@ class CommitLog
   end
 
   def colorize_stats(stats)
-    stats.gsub(/\+/) { decorate("+", :green) }.gsub(/-/) { decorate("-", :red) }
+    stats.gsub(/\+/) { Style.decorate("+", color: :green) }.gsub(/-/) { Style.decorate("-", color: :red) }
   end
 
   def colorize_summary(summary)
     summary
-      .gsub(/(\d+) insertion(s?)/) { "#{decorate($1, :green)} insertion#{$2}" }
-      .gsub(/(\d+) deletion(s?)/) { "#{decorate($1, :red)} deletion#{$2}" }
-  end
-
-  def decorate(string, color)
-    if string.respond_to?(color)
-      string.send(color)
-    else
-      string
-    end
+      .gsub(/(\d+) insertion(s?)/) { "#{Style.decorate($1, color: :green)} insertion#{$2}" }
+      .gsub(/(\d+) deletion(s?)/) { "#{Style.decorate($1, color: :red)} deletion#{$2}" }
   end
 end
 

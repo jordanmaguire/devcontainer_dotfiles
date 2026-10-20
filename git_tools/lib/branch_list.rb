@@ -1,10 +1,5 @@
-begin
-  require "colorize"
-rescue LoadError
-  # Oh well, we tried.
-end
-
 require_relative "branch"
+require_relative "style"
 
 class BranchList
   def initialize(branches:)
@@ -15,16 +10,8 @@ class BranchList
     puts
     @branches.each do |branch|
       indicator = branch.current? ? "*" : " "
-      puts "#{ decorate_string(indicator, color: :green) } #{ branch.prompt_text }"
+      puts "#{ Style.decorate(indicator, color: :green) } #{ branch.prompt_text }"
     end
     puts
-  end
-
-  private def decorate_string(string, color: :cyan)
-    if string.respond_to?(color)
-      string.send(color)
-    else
-      string
-    end
   end
 end
