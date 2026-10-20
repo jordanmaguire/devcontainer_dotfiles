@@ -84,6 +84,12 @@ class Worktree
     status == :clean
   end
 
+  # Refuses a worktree with modified or untracked files unless forced. Ignored files such as
+  # .env do not count, and are deleted with it. Works on a worktree whose folder is missing.
+  def remove(force: false)
+    Git.run("worktree", "remove", *("--force" if force), @path)
+  end
+
   # Relative to the main worktree when inside it, otherwise absolute with ~ for home.
   def display_path
     main_path = self.class.main_path
