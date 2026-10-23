@@ -28,7 +28,7 @@ is loaded in every session through `CLAUDE_CODE_PLUGIN_DIRS` in `~/dotfiles/clau
   - A tool, `mcp__review-picker__propose_changes`, that Claude calls with `{ title, changes: [...] }`. Each change
     has a `reason` and is either an edit (`file`, `line`, `before`, `after`, `context_after?`), drawn as a diff, or a
     proposal (`proposal`, `files?`), drawn as a description. Numbers follow the order of `changes`, starting at 1.
-  - The `reviews` skill (`~/dotfiles/claude/skills/reviews/`) is the caller: it runs each review and calls the tool.
+  - The `jm-review` skill (`~/dotfiles/claude/skills/jm-review/`) is the caller: it runs each review and calls the tool.
   - A pane drawn with the mod UI elements (`Box`, `Text`, `Button`).
   - A `/review-picker` command that reopens the pane.
 - Pressing "Apply selected" calls `$.prompt.submit({ text, asUser: true })` with, e.g.:
@@ -266,7 +266,7 @@ Done as described: the pane is the default, the page is opt-in from a button, an
 
 The mod reloads by itself when a session saves files in its folder; otherwise start a new session.
 
-1. Run `/reviews` (or any review) so the Review pane opens. The pane looks as it did before, with a new **Open in
+1. Run `/jm-review` (or any review) so the Review pane opens. The pane looks as it did before, with a new **Open in
    browser** button after Untick all.
 2. Press **Open in browser**. A browser tab should open at `http://127.0.0.1:<port>/<token>/`, or at a forwarded
    `localhost` port. The pane gains a line reading `Page: <url>`.

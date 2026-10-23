@@ -1,10 +1,10 @@
 ---
-name: reviews
-description: Run one or more of the user's own code reviews (comment accuracy, and others listed in this skill's reviews/ folder) over the current branch, staged changes or a path, and let the user tick which suggestions to apply in the review-picker pane. Triggers on "/reviews", "run my reviews", "review the comments on this branch", "do a comment review", or any named review in reviews/. Not for a correctness bug hunt (that is /code-review).
+name: jm-review
+description: Run one or more of the user's own code reviews (comment accuracy, and others listed in this skill's reviews/ folder) over the current branch, staged changes or a path, and let the user tick which suggestions to apply in the review-picker pane. Triggers on "/jm-review", "run my reviews", "review the comments on this branch", "do a comment review", or any named review in reviews/. Not for a correctness bug hunt (that is /code-review).
 argument-hint: "[review names...] [staged | working | <path> | <git range>]"
 ---
 
-# reviews
+# jm-review
 
 Each file in `reviews/` (next to this file) is one review: what to look for, what to leave alone, and the shape its
 suggestions take. This skill picks the scope and the reviews, runs them one at a time, and hands each review's
