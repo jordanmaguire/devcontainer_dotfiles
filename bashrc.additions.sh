@@ -26,7 +26,7 @@ alias grs="git rebase --skip"
 alias grb="git rebase --committer-date-is-author-date"
 alias gri="git rebase -i"
 alias grim="git rebase -i master"
-alias gst="git status"
+alias gst="git status -s"
 alias diffupstream="git diff @{upstream}"
 
 # Git Tools - I named these a decade ago. I don't think the names are accurate enough, but
