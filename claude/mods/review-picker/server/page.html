@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review: {{title}}</title>
+<style nonce="{{nonce}}">
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0; --card: #f6f8fa;
+    --del-bg: #ffebe9; --del-word: #ff818266; --add-bg: #dafbe1; --add-word: #4fc26b66;
+    --accent: #0969da; --accent-fg: #ffffff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #3d444d; --card: #151b23;
+      --del-bg: #3c1618; --del-word: #f8514966; --add-bg: #12261e; --add-word: #2ea04366;
+      --accent: #4493f8; --accent-fg: #0d1117;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 96px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .count { color: var(--muted); margin: 0 0 20px; }
+  .change { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 16px; overflow: hidden; }
+  .change.off { opacity: 0.55; }
+  .head { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; background: var(--card); cursor: pointer; }
+  .head input { transform: translateY(2px); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  .num { font-weight: 600; }
+  .loc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .reason { padding: 8px 12px 0; color: var(--muted); }
+  .proposal { padding: 8px 12px 12px; white-space: pre-wrap; }
+  .files { padding: 0 12px 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-line; }
+  .diff { margin: 8px 0 0; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
+  .diff div { white-space: pre; padding: 0 12px; min-width: max-content; }
+  .diff .del { background: var(--del-bg); }
+  .diff .add { background: var(--add-bg); }
+  .diff .ctx { color: var(--muted); }
+  .diff .del mark { background: var(--del-word); color: inherit; border-radius: 2px; }
+  .diff .add mark { background: var(--add-word); color: inherit; border-radius: 2px; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--border); }
+  .bar div { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .status { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title"></h1>
+  <p class="count" id="count"></p>
+  <div id="changes"></div>
+</main>
+<div class="bar"><div>
+  <button class="primary" id="apply"></button>
+  <button id="all">Tick all</button>
+  <button id="none">Untick all</button>
+  <span class="status" id="status" role="status"></span>
+</div></div>
+<script type="application/json" id="data">{{data}}</script>
+<script nonce="{{nonce}}">
+  const review = JSON.parse(document.getElementById('data').textContent)
+  const boxes = new Map()
+  let isSent = false
+
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag)
+    if (className) node.className = className
+    if (text !== undefined) node.textContent = text
+    return node
+  }
+
+  const lines = text => (text === '' ? [] : text.replace(/\r/g, '').replace(/\n$/, '').split('\n'))
+
+  // Word-level highlight: the tokens outside the longest common subsequence of the two lines are marked.
+  const tokens = line => line.match(/\w+|\s+|[^\w\s]/g) ?? []
+  const marked = (from, to) => {
+    const a = tokens(from), b = tokens(to)
+    if (a.length * b.length > 40000) return [[{ text: from, isMarked: true }], [{ text: to, isMarked: true }]]
+    const table = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0))
+    for (let i = a.length - 1; i >= 0; i--)
+      for (let j = b.length - 1; j >= 0; j--)
+        table[i][j] = a[i] === b[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1])
+    const left = [], right = []
+    let i = 0, j = 0
+    while (i < a.length || j < b.length) {
+      if (i < a.length && j < b.length && a[i] === b[j]) {
+        left.push({ text: a[i++], isMarked: false })
+        right.push({ text: b[j++], isMarked: false })
+      } else if (j >= b.length || (i < a.length && table[i + 1][j] >= table[i][j + 1])) left.push({ text: a[i++], isMarked: true })
+      else right.push({ text: b[j++], isMarked: true })
+    }
+    // A line that keeps no word of the other reads better on its background alone than with every word marked.
+    const isRewritten = parts => !parts.some(part => !part.isMarked && /\w/.test(part.text))
+    if (isRewritten(left) || isRewritten(right)) return [[{ text: from }], [{ text: to }]]
+    return [joined(left), joined(right)]
+  }
+
+  // Spaces between two marked words are marked too, so a changed phrase is one mark rather than one per word.
+  const joined = parts =>
+    parts.map((part, index) =>
+      part.text.trim() === '' && parts[index - 1]?.isMarked && parts[index + 1]?.isMarked ? { ...part, isGap: true } : part,
+    )
+
+  const diffLine = (className, sign, parts) => {
+    const row = el('div', className, sign)
+    let mark
+    for (const part of parts) {
+      const isShown = (part.isMarked && part.text.trim() !== '') || part.isGap
+      if (!isShown) mark = undefined
+      else if (mark) mark.textContent += part.text
+      else row.append((mark = el('mark', '', part.text)))
+      if (!isShown) row.append(part.text)
+    }
+    return row
+  }
+
+  const diff = change => {
+    const box = el('div', 'diff')
+    const removed = lines(change.before), added = lines(change.after)
+    const isPaired = removed.length === added.length
+    const pairs = removed.map((line, index) => (isPaired ? marked(line, added[index]) : [[{ text: line }], []]))
+    removed.forEach((line, index) => box.append(diffLine('del', '- ', pairs[index][0])))
+    added.forEach((line, index) => box.append(diffLine('add', '+ ', isPaired ? pairs[index][1] : [{ text: line }])))
+    lines(change.contextAfter).forEach(line => box.append(diffLine('ctx', '  ', [{ text: line }])))
+    return box
+  }
+
+  const place = change => {
+    if (change.kind === 'edit') return `${change.file}:${change.line}`
+    const [first, ...rest] = change.files
+    if (first === undefined) return 'Proposal'
+    return rest.length === 0 ? `Proposal: ${first}` : `Proposal: ${first} +${rest.length} more`
+  }
+
+  const chosen = () => review.changes.filter(change => boxes.get(change.id).checked).map(change => change.id)
+  const skipped = () => review.changes.filter(change => !boxes.get(change.id).checked).map(change => change.id)
+  const list = ids => (ids.length === 0 ? 'none' : ids.join(', '))
+
+  const refresh = () => {
+    const ticked = chosen().length
+    document.getElementById('count').textContent = `${ticked} of ${review.changes.length} ticked`
+    document.getElementById('apply').textContent = ticked === 0 ? 'Skip all' : `Apply selected (${ticked})`
+    for (const change of review.changes)
+      boxes.get(change.id).closest('.change').classList.toggle('off', !boxes.get(change.id).checked)
+  }
+
+  document.getElementById('title').textContent = review.title
+  const container = document.getElementById('changes')
+  for (const change of review.changes) {
+    const card = el('section', 'change')
+    const head = el('label', 'head')
+    const box = el('input')
+    box.type = 'checkbox'
+    box.checked = change.isSelected
+    box.addEventListener('change', refresh)
+    boxes.set(change.id, box)
+    head.append(box, el('span', 'num', `${change.id}.`), el('span', 'loc', place(change)))
+    card.append(head)
+    if (change.reason !== '') card.append(el('div', 'reason', change.reason))
+    if (change.kind === 'proposal') {
+      card.append(el('div', 'proposal', change.proposal))
+      if (change.files.length > 1) card.append(el('div', 'files', change.files.join('\n')))
+    } else card.append(diff(change))
+    container.append(card)
+  }
+
+  const setAll = isChecked => {
+    for (const box of boxes.values()) box.checked = isChecked
+    refresh()
+  }
+  document.getElementById('all').addEventListener('click', () => setAll(true))
+  document.getElementById('none').addEventListener('click', () => setAll(false))
+
+  const status = document.getElementById('status')
+  const buttons = document.querySelectorAll('button')
+  document.getElementById('apply').addEventListener('click', async () => {
+    if (isSent) return
+    buttons.forEach(button => (button.disabled = true))
+    const selected = chosen()
+    try {
+      const response = await fetch('submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected }),
+      })
+      if (!response.ok) throw new Error(String(response.status))
+      isSent = true
+      boxes.forEach(box => (box.disabled = true))
+      status.textContent = `Sent to Claude: apply ${list(selected)}; skip ${list(skipped())}. You can close this tab.`
+    } catch {
+      buttons.forEach(button => (button.disabled = false))
+      status.textContent =
+        'Could not reach Claude Code. The review may have been answered in the pane or replaced by a newer one.'
+    }
+  })
+
+  refresh()
+</script>
+</body>
+</html>

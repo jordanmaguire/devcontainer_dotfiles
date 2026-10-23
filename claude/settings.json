@@ -8,6 +8,9 @@
       "/tmp"
     ]
   },
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/claude/mods/review-picker"
+  },
   "model": "opus[1m]",
   "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,

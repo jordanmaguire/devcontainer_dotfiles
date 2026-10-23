@@ -1,0 +1,12 @@
+{
+  "name": "review-picker-browser",
+  "displayName": "Review picker browser",
+  "description": "Opens the review-picker mod's page in VS Code's Simple Browser",
+  "version": "0.1.0",
+  "publisher": "dusc",
+  "license": "UNLICENSED",
+  "engines": { "vscode": "^1.90.0" },
+  "extensionKind": ["workspace"],
+  "activationEvents": ["onUri"],
+  "main": "./extension.js"
+}
