@@ -1,5 +1,5 @@
 {
-  "name": "review-picker",
+  "name": "jm-review-picker",
   "version": "0.1.0",
   "description": "Shows a review's proposed text changes as diffs in a pane or a local web page, each with a checkbox, and sends the ticked ones back to Claude",
   "types": "./types/index.d.ts"

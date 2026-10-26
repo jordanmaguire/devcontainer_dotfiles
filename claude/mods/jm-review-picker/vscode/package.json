@@ -1,7 +1,7 @@
 {
   "name": "review-picker-browser",
   "displayName": "Review picker browser",
-  "description": "Opens the review-picker mod's page in VS Code's Simple Browser",
+  "description": "Opens the jm-review-picker mod's page in VS Code's Simple Browser",
   "version": "0.1.0",
   "publisher": "dusc",
   "license": "UNLICENSED",

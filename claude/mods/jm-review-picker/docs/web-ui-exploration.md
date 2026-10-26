@@ -1,4 +1,4 @@
-# Explore a local web UI for review-picker
+# Explore a local web UI for jm-review-picker
 
 ## Task
 
@@ -21,16 +21,16 @@ Then one action sends the choices back to Claude, which applies only the ticked 
 
 ## What exists today
 
-The `review-picker` mod in `~/dotfiles/claude/mods/review-picker/` does all of the above in a Claude Code pane. It
+The `jm-review-picker` mod in `~/dotfiles/claude/mods/jm-review-picker/` does all of the above in a Claude Code pane. It
 is loaded in every session through `CLAUDE_CODE_PLUGIN_DIRS` in `~/dotfiles/claude/settings.json`.
 
 - `hooks/register.tsx` registers:
-  - A tool, `mcp__review-picker__propose_changes`, that Claude calls with `{ title, changes: [...] }`. Each change
+  - A tool, `mcp__jm-review-picker__propose_changes`, that Claude calls with `{ title, changes: [...] }`. Each change
     has a `reason` and is either an edit (`file`, `line`, `before`, `after`, `context_after?`), drawn as a diff, or a
     proposal (`proposal`, `files?`), drawn as a description. Numbers follow the order of `changes`, starting at 1.
   - The `jm-review` skill (`~/dotfiles/claude/skills/jm-review/`) is the caller: it runs each review and calls the tool.
   - A pane drawn with the mod UI elements (`Box`, `Text`, `Button`).
-  - A `/review-picker` command that reopens the pane.
+  - A `/jm-review-picker` command that reopens the pane.
 - Pressing "Apply selected" calls `$.prompt.submit({ text, asUser: true })` with, e.g.:
   ```
   Apply these changes from the "Comment accuracy" review: 1, 3, 4.
@@ -111,7 +111,7 @@ container. It documents the following, which has already been learned and should
    - each question above, with what you tried and what happened
    - a recommendation: web only, pane only, or both
    - the cost of maintaining it
-2. If the recommendation includes a web page, a prototype under `~/dotfiles/claude/mods/review-picker/`, or a
+2. If the recommendation includes a web page, a prototype under `~/dotfiles/claude/mods/jm-review-picker/`, or a
    skill under `~/dotfiles/claude/skills/` if it turns out not to need the mod. The prototype should take the same
    `propose_changes` input and produce the same reply text.
 3. Steps the user can follow to try it, including the URL or command and what they should see.
@@ -207,7 +207,7 @@ Checks run:
 - VS Code may ask once whether to let the extension open the URI.
 - To build and install it after a change, or in a new container:
   ```
-  cd <scratch dir> && cp ~/dotfiles/claude/mods/review-picker/vscode/{package.json,extension.js} .
+  cd <scratch dir> && cp ~/dotfiles/claude/mods/jm-review-picker/vscode/{package.json,extension.js} .
   npx --yes @vscode/vsce@3.2.1 package --skip-license --allow-missing-repository
   "$(dirname "$BROWSER")/../remote-cli/code" --install-extension review-picker-browser-0.1.0.vsix
   ```

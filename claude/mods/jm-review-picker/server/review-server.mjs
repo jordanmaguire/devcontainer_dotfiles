@@ -2,7 +2,7 @@
 //
 // Reads `{ title, changes }` (the mod's parsed Proposal) as JSON on stdin, then writes one JSON line per event:
 //   { "url": "http://127.0.0.1:<port>/<token>/" }   once listening
-//   { "selected": [1, 3] }                          when the user presses Apply, then exits
+//   { "selected": [1, 3], "notes": { "2": "..." } } when the user presses Apply, then exits
 //
 // The token is random per run, so only the page the mod hands out can post a choice. The review is never written to
 // stdout, stderr or a URL.
@@ -57,11 +57,21 @@ const readBody = req =>
     req.on('error', reject)
   })
 
-const parseSelected = body => {
-  const { selected } = JSON.parse(body)
+// Notes keyed by change number; blank ones are dropped.
+const parseNotes = notes => {
+  if (notes === undefined) return {}
+  if (notes === null || typeof notes !== 'object' || Array.isArray(notes)) throw new Error('bad notes')
+  const entries = Object.entries(notes)
+  if (!entries.every(([id, text]) => ids.has(Number(id)) && typeof text === 'string')) throw new Error('bad notes')
+
+  return Object.fromEntries(entries.filter(([, text]) => text.trim() !== '').map(([id, text]) => [id, text.trim()]))
+}
+
+const parseChoice = body => {
+  const { selected, notes } = JSON.parse(body)
   if (!Array.isArray(selected) || !selected.every(id => ids.has(id))) throw new Error('bad selection')
 
-  return [...new Set(selected)].sort((a, b) => a - b)
+  return { selected: [...new Set(selected)].sort((a, b) => a - b), notes: parseNotes(notes) }
 }
 
 let idle = setTimeout(() => process.exit(0), IDLE_MS)
@@ -82,13 +92,13 @@ const server = createServer(async (req, res) => {
     })
 
   if (req.method === 'POST' && path === `/${token}/submit`) {
-    let selected
+    let choice
     try {
-      selected = parseSelected(await readBody(req))
+      choice = parseChoice(await readBody(req))
     } catch {
       return send(res, 400, 'application/json', '{"ok":false}')
     }
-    emit({ selected })
+    emit(choice)
     res.on('finish', () => server.close(() => process.exit(0)))
 
     return send(res, 200, 'application/json', '{"ok":true}', { Connection: 'close' })

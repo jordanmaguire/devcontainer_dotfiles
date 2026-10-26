@@ -25,14 +25,20 @@
   h1 { font-size: 20px; margin: 0 0 4px; }
   .count { color: var(--muted); margin: 0 0 20px; }
   .change { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 16px; overflow: hidden; }
-  .change.off { opacity: 0.55; }
-  .head { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; background: var(--card); cursor: pointer; }
-  .head input { transform: translateY(2px); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  .change.off .head label, .change.off .body > :not(.note) { opacity: 0.55; }
+  .head { display: flex; gap: 6px; align-items: baseline; padding: 6px 12px 6px 4px; background: var(--card); }
+  .head label { display: flex; flex: 1; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 4px 0; cursor: pointer; }
+  .head input { transform: translateY(2px); width: 16px; height: 16px; margin: 0; cursor: pointer; flex: none; }
+  button.fold { border: 0; background: none; padding: 4px 6px; color: var(--muted); font-size: 12px; line-height: 1; transition: transform 0.12s; }
+  .change.closed button.fold { transform: rotate(-90deg); }
+  .change.closed .body { display: none; }
   .num { font-weight: 600; }
-  .loc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .name { font-weight: 600; }
   .reason { padding: 8px 12px 0; color: var(--muted); }
-  .proposal { padding: 8px 12px 12px; white-space: pre-wrap; }
-  .files { padding: 0 12px 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-line; }
+  .meta { padding: 6px 12px 0; display: flex; flex-direction: column; gap: 2px; }
+  .loc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .head .commit { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .proposal { padding: 8px 12px 4px; white-space: pre-wrap; }
   .diff { margin: 8px 0 0; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
   .diff div { white-space: pre; padding: 0 12px; min-width: max-content; }
   .diff .del { background: var(--del-bg); }
@@ -40,6 +46,9 @@
   .diff .ctx { color: var(--muted); }
   .diff .del mark { background: var(--del-word); color: inherit; border-radius: 2px; }
   .diff .add mark { background: var(--add-word); color: inherit; border-radius: 2px; }
+  .note { padding: 10px 12px 12px; }
+  .note textarea { display: block; width: 100%; min-height: 2.6em; resize: vertical; font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
+  .note textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--border); }
   .bar div { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   button { font: inherit; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; }
@@ -64,6 +73,8 @@
 <script nonce="{{nonce}}">
   const review = JSON.parse(document.getElementById('data').textContent)
   const boxes = new Map()
+  const cards = new Map()
+  const notes = new Map()
   let isSent = false
 
   const el = (tag, className, text) => {
@@ -129,67 +140,104 @@
     return box
   }
 
-  const place = change => {
-    if (change.kind === 'edit') return `${change.file}:${change.line}`
-    const [first, ...rest] = change.files
-    if (first === undefined) return 'Proposal'
-    return rest.length === 0 ? `Proposal: ${first}` : `Proposal: ${first} +${rest.length} more`
-  }
-
   const chosen = () => review.changes.filter(change => boxes.get(change.id).checked).map(change => change.id)
   const skipped = () => review.changes.filter(change => !boxes.get(change.id).checked).map(change => change.id)
   const list = ids => (ids.length === 0 ? 'none' : ids.join(', '))
 
+  // How many commits the ticked changes go into; changes with the same commitKey share one.
+  const commitCount = () => {
+    const keys = new Set(
+      review.changes.filter(change => boxes.get(change.id).checked && change.commitKey !== 'none').map(change => change.commitKey),
+    )
+    return keys.size === 1 ? '1 commit' : `${keys.size} commits`
+  }
+
   const refresh = () => {
     const ticked = chosen().length
-    document.getElementById('count').textContent = `${ticked} of ${review.changes.length} ticked`
+    const commits = review.hasCommits && ticked > 0 ? ` · ${commitCount()}` : ''
+    document.getElementById('count').textContent = `${ticked} of ${review.changes.length} ticked${commits}`
     document.getElementById('apply').textContent = ticked === 0 ? 'Skip all' : `Apply selected (${ticked})`
     for (const change of review.changes)
-      boxes.get(change.id).closest('.change').classList.toggle('off', !boxes.get(change.id).checked)
+      cards.get(change.id).classList.toggle('off', !boxes.get(change.id).checked)
+  }
+
+  const setOpen = (id, isOpen) => {
+    cards.get(id).classList.toggle('closed', !isOpen)
+    cards.get(id).querySelector('button.fold').setAttribute('aria-expanded', String(isOpen))
   }
 
   document.getElementById('title').textContent = review.title
   const container = document.getElementById('changes')
   for (const change of review.changes) {
     const card = el('section', 'change')
-    const head = el('label', 'head')
+    cards.set(change.id, card)
+    const head = el('div', 'head')
+    const fold = el('button', 'fold', '▼')
+    fold.type = 'button'
+    fold.setAttribute('aria-label', `Show or hide change ${change.id}`)
+    fold.addEventListener('click', () => setOpen(change.id, card.classList.contains('closed')))
+    const label = el('label')
     const box = el('input')
     box.type = 'checkbox'
     box.checked = change.isSelected
-    box.addEventListener('change', refresh)
+    // Ticking a change opens its card and unticking closes it; the arrow opens or closes it alone.
+    box.addEventListener('change', () => {
+      setOpen(change.id, box.checked)
+      refresh()
+    })
     boxes.set(change.id, box)
-    head.append(box, el('span', 'num', `${change.id}.`), el('span', 'loc', place(change)))
-    card.append(head)
-    if (change.reason !== '') card.append(el('div', 'reason', change.reason))
-    if (change.kind === 'proposal') {
-      card.append(el('div', 'proposal', change.proposal))
-      if (change.files.length > 1) card.append(el('div', 'files', change.files.join('\n')))
-    } else card.append(diff(change))
+    label.append(box, el('span', 'num', `${change.id}.`), el('span', 'name', change.title))
+    if (review.hasCommits) label.append(el('span', 'commit', `→ ${change.commitLabel}`))
+    head.append(fold, label)
+
+    const body = el('div', 'body')
+    if (change.reason !== '') body.append(el('div', 'reason', change.reason))
+    const meta = el('div', 'meta')
+    for (const place of change.places) meta.append(el('div', 'loc', place))
+    body.append(meta)
+    body.append(change.kind === 'proposal' ? el('div', 'proposal', change.proposal) : diff(change))
+    const note = el('div', 'note')
+    const field = el('textarea')
+    field.rows = 2
+    field.placeholder = 'Note for Claude (optional): a question, or what to do instead'
+    field.setAttribute('aria-label', `Note on change ${change.id}`)
+    notes.set(change.id, field)
+    note.append(field)
+    body.append(note)
+    card.append(head, body)
     container.append(card)
+    setOpen(change.id, change.isOpen)
   }
 
   const setAll = isChecked => {
-    for (const box of boxes.values()) box.checked = isChecked
+    for (const [id, box] of boxes) {
+      box.checked = isChecked
+      setOpen(id, isChecked)
+    }
     refresh()
   }
   document.getElementById('all').addEventListener('click', () => setAll(true))
   document.getElementById('none').addEventListener('click', () => setAll(false))
 
   const status = document.getElementById('status')
-  const buttons = document.querySelectorAll('button')
+  const buttons = document.querySelectorAll('.bar button')
   document.getElementById('apply').addEventListener('click', async () => {
     if (isSent) return
     buttons.forEach(button => (button.disabled = true))
     const selected = chosen()
+    const written = Object.fromEntries(
+      [...notes].filter(([, field]) => field.value.trim() !== '').map(([id, field]) => [id, field.value]),
+    )
     try {
       const response = await fetch('submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected }),
+        body: JSON.stringify({ selected, notes: written }),
       })
       if (!response.ok) throw new Error(String(response.status))
       isSent = true
       boxes.forEach(box => (box.disabled = true))
+      notes.forEach(field => (field.readOnly = true))
       status.textContent = `Sent to Claude: apply ${list(selected)}; skip ${list(skipped())}. You can close this tab.`
     } catch {
       buttons.forEach(button => (button.disabled = false))
