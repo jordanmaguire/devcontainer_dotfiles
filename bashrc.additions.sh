@@ -32,10 +32,22 @@ alias diffupstream="git diff @{upstream}"
 # Git Tools - I named these a decade ago. I don't think the names are accurate enough, but
 # I'm not going to waste time renaming them.
 alias gbr="~/dotfiles/git_tools/git_smart_branch.rb"
-alias gco="~/dotfiles/git_tools/git_smart_checkout.rb"
 alias gsl="~/dotfiles/git_tools/git_smart_log.rb"
 alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
 alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
+# gco is a function rather than an alias so that picking a branch checked out in another worktree
+# can cd you into that worktree, which the script can't do to its parent shell.
+unalias gco 2>/dev/null
+gco() {
+  local cd_file destination
+  cd_file=$(mktemp)
+  GCO_CD_FILE="$cd_file" ~/dotfiles/git_tools/git_smart_checkout.rb
+  destination=$(cat "$cd_file")
+  rm -f "$cd_file"
+  if [ -n "$destination" ]; then
+    cd "$destination" || return
+  fi
+}
 # TODO: I have no idea where this tool went. I evidently deleted the code for it.
 #       I can see use for this - maybe it shows the branches in your current tree first and then
 #       other branches after.

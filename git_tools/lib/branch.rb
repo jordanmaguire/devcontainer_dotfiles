@@ -9,12 +9,13 @@ class Branch
   MAX_NAME_LENGTH = 50
   PROTECTED_BRANCH_NAMES = ["main", "master"].freeze
 
-  def initialize(name, current: false)
+  def initialize(name, current: false, worktree_path: nil)
     @name = name
     @current = current
+    @worktree_path = worktree_path
   end
 
-  attr_reader :name
+  attr_reader :name, :worktree_path
 
   def protected?
     PROTECTED_BRANCH_NAMES.include?(@name)
@@ -24,12 +25,18 @@ class Branch
     @current
   end
 
+  # Checked out in a worktree other than the one we're in, so `git checkout` and `git branch -d`
+  # will both refuse to touch it.
+  def in_other_worktree?
+    !current? && !@worktree_path.nil?
+  end
+
   def recency_color
     commit_time_color(last_commit_info.first)
   end
 
   def prompt_text
-    [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")
+    [truncated_name, time_suffix, unpushed_indicator, worktree_suffix].reject(&:empty?).join(" ")
   end
 
   private def truncated_name
@@ -51,6 +58,12 @@ class Branch
     return "" if relative_time.empty?
 
     decorate_string(relative_time, color: commit_time_color(timestamp))
+  end
+
+  private def worktree_suffix
+    return "" unless in_other_worktree?
+
+    decorate_string(@worktree_path.sub(/\A#{Regexp.escape(Dir.home)}(?=\/|\z)/, "~"), color: :cyan)
   end
 
   private def unpushed_indicator

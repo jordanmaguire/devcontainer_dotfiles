@@ -14,10 +14,20 @@ class BranchList
   def display
     puts
     @branches.each do |branch|
-      indicator = branch.current? ? "*" : " "
-      puts "#{ decorate_string(indicator, color: :green) } #{ branch.prompt_text }"
+      puts "#{ indicator(branch) } #{ branch.prompt_text }"
     end
     puts
+  end
+
+  # Mirrors `git branch`: * for the current branch, + for a branch checked out in another worktree
+  private def indicator(branch)
+    if branch.current?
+      decorate_string("*", color: :green)
+    elsif branch.in_other_worktree?
+      decorate_string("+", color: :cyan)
+    else
+      " "
+    end
   end
 
   private def decorate_string(string, color: :cyan)

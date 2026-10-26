@@ -21,26 +21,26 @@ class BranchSelectionPrompt
 
   def prompt_for_branch_selection
     print_prompt_for_branch_selection
-    get_branch_name_from_user_input(gets.strip)
+    get_branches_from_user_input(gets.strip)
   end
 
-  private def get_branch_name_from_user_input(user_input)
+  private def get_branches_from_user_input(user_input)
     return if user_input.downcase == "c"
 
     branch_numbers = user_input.split(" ")
-    branch_names = branch_numbers.map do |branch_number|
+    chosen_branches = branch_numbers.map do |branch_number|
       if branch_number =~ NUMBER_REGEXP
         chosen_branch_index = branch_number.to_i - 1
-        if chosen_branch_index != -1 && !(chosen_branch = @branches[chosen_branch_index]).nil?
-          chosen_branch.name
+        if chosen_branch_index != -1
+          @branches[chosen_branch_index]
         end
       end
     end.compact
 
     if @allow_multiple
-      branch_names
+      chosen_branches
     else
-      branch_names.first
+      chosen_branches.first
     end
   end
 
@@ -52,6 +52,17 @@ class BranchSelectionPrompt
     end
   end
 
+  # Mirrors `git branch`: * for the current branch, + for a branch checked out in another worktree
+  private def indicator(branch)
+    if branch.current?
+      decorate_string("*", color: branch.recency_color)
+    elsif branch.in_other_worktree?
+      decorate_string("+", color: :cyan)
+    else
+      " "
+    end
+  end
+
   private def print_prompt_for_branch_selection
     puts
     puts @prompt_message
@@ -59,8 +70,7 @@ class BranchSelectionPrompt
     @branches.each.with_index(1) do |branch, position|
       position_string = position.to_s.rjust(3)
       position_color = branch.current? ? branch.recency_color : :cyan
-      current_indicator = branch.current? ? decorate_string("*", color: branch.recency_color) : " "
-      puts "#{ current_indicator }#{ decorate_string(position_string, color: position_color) } #{ branch.prompt_text }"
+      puts "#{ indicator(branch) }#{ decorate_string(position_string, color: position_color) } #{ branch.prompt_text }"
     end
     puts
 
