@@ -18,5 +18,17 @@
     "claude-opus-5-5": {
       "effortLevel": "high"
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dusc-skills hook-session-start"
+          }
+        ]
+      }
+    ]
   }
 }
