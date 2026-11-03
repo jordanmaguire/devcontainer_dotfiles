@@ -44,8 +44,10 @@ class Branch
     !current? && !@worktree_path.nil?
   end
 
+  # Grey is kept for branches with no upstream (the prompt prints a "no upstream" key under the
+  # list), otherwise it's how recently the branch was used
   def recency_color
-    time_color(last_used_timestamp)
+    no_upstream? ? :light_black : time_color(last_used_timestamp)
   end
 
   def prompt_text
@@ -59,14 +61,7 @@ class Branch
       @name.ljust(MAX_NAME_LENGTH)
     end
 
-    # Grey is kept for branches with no upstream; the prompt prints a "no upstream" key under the list
-    if no_upstream?
-      decorate_string(name_text, color: :light_black)
-    elsif current?
-      decorate_string(name_text, color: recency_color)
-    else
-      name_text
-    end
+    current? || no_upstream? ? decorate_string(name_text, color: recency_color) : name_text
   end
 
   # When the branch was last checked out, falling back to its last commit for branches the reflogs
