@@ -36,7 +36,7 @@ class Branch
   end
 
   def prompt_text
-    [truncated_name, time_suffix, unpushed_indicator, worktree_suffix].reject(&:empty?).join(" ")
+    [truncated_name, time_suffix, unpushed_indicator].reject(&:empty?).join(" ")
   end
 
   private def truncated_name
@@ -60,7 +60,8 @@ class Branch
     decorate_string(relative_time, color: commit_time_color(timestamp))
   end
 
-  private def worktree_suffix
+  # Printed on its own line under the branch, indented by the caller to line up with the name
+  def worktree_text
     return "" unless in_other_worktree?
 
     decorate_string(@worktree_path.sub(/\A#{Regexp.escape(Dir.home)}(?=\/|\z)/, "~"), color: :cyan)

@@ -71,6 +71,8 @@ class BranchSelectionPrompt
       position_string = position.to_s.rjust(3)
       position_color = branch.current? ? branch.recency_color : :cyan
       puts "#{ indicator(branch) }#{ decorate_string(position_string, color: position_color) } #{ branch.prompt_text }"
+      # 1 for the indicator, 3 for the position, 1 for the space: lines up with the branch name
+      puts "#{ " " * 5 }#{ branch.worktree_text }" unless branch.worktree_text.empty?
     end
     puts
 
