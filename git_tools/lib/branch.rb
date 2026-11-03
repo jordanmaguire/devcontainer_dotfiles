@@ -59,7 +59,14 @@ class Branch
       @name.ljust(MAX_NAME_LENGTH)
     end
 
-    current? ? decorate_string(name_text, color: recency_color) : name_text
+    # Grey is kept for branches with no upstream; the prompt prints a "no upstream" key under the list
+    if no_upstream?
+      decorate_string(name_text, color: :light_black)
+    elsif current?
+      decorate_string(name_text, color: recency_color)
+    else
+      name_text
+    end
   end
 
   # When the branch was last checked out, falling back to its last commit for branches the reflogs
@@ -91,9 +98,7 @@ class Branch
   end
 
   private def unpushed_indicator
-    unless has_upstream?
-      return decorate_string("(no upstream)", color: :light_black)
-    end
+    return "" if no_upstream?
 
     unpushed_count = `git rev-list --count origin/#{ @name }..#{ @name } 2>/dev/null`.strip.to_i
     if unpushed_count > 0
@@ -103,8 +108,10 @@ class Branch
     end
   end
 
-  private def has_upstream?
-    system("git rev-parse --abbrev-ref #{ @name }@{upstream} >/dev/null 2>&1")
+  def no_upstream?
+    return @no_upstream if defined?(@no_upstream)
+
+    @no_upstream = !system("git rev-parse --abbrev-ref #{ @name }@{upstream} >/dev/null 2>&1")
   end
 
   private def last_commit_timestamp
@@ -112,17 +119,10 @@ class Branch
     output.empty? ? nil : output.to_i
   end
 
+  # Green for the last week, yellow for anything older
   private def time_color(timestamp)
-    return :light_black if timestamp.zero?
-
     age_in_seconds = Time.now.to_i - timestamp
-    if age_in_seconds < SECONDS_IN_A_DAY * 7
-      :green
-    elsif age_in_seconds < SECONDS_IN_A_DAY * 30
-      :yellow
-    else
-      :light_black
-    end
+    age_in_seconds < SECONDS_IN_A_DAY * 7 ? :green : :yellow
   end
 
   private def decorate_string(string, color: :cyan)

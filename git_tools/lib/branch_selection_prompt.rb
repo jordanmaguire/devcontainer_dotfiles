@@ -75,6 +75,11 @@ class BranchSelectionPrompt
       puts "#{ " " * 5 }#{ branch.worktree_text }" unless branch.worktree_text.empty?
     end
     puts
+    # Key for the grey branch names, lined up with them
+    if @branches.any?(&:no_upstream?)
+      puts "#{ " " * 5 }#{ decorate_string("no upstream", color: :light_black) }"
+      puts
+    end
 
     # Use print rather than puts so that the number(s) the user types shows on the same line
     if @allow_multiple

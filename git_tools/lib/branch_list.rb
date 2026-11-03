@@ -18,6 +18,11 @@ class BranchList
       puts "  #{ branch.worktree_text }" unless branch.worktree_text.empty?
     end
     puts
+    # Key for the grey branch names, lined up with them
+    if @branches.any?(&:no_upstream?)
+      puts "  #{ decorate_string("no upstream", color: :light_black) }"
+      puts
+    end
   end
 
   # Mirrors `git branch`: * for the current branch, + for a branch checked out in another worktree
