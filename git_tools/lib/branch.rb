@@ -4,8 +4,21 @@ rescue LoadError
   # Oh well, we tried.
 end
 
+require "open3"
+require_relative "checkout_history"
+
 class Branch
   SECONDS_IN_A_DAY = 86400
+  # Roughly where `git log --date=relative` switches units: [below this many seconds, unit, seconds per unit]
+  RELATIVE_TIME_UNITS = [
+    [90, "second", 1],
+    [90 * 60, "minute", 60],
+    [36 * 3600, "hour", 3600],
+    [14 * SECONDS_IN_A_DAY, "day", SECONDS_IN_A_DAY],
+    [70 * SECONDS_IN_A_DAY, "week", 7 * SECONDS_IN_A_DAY],
+    [365 * SECONDS_IN_A_DAY, "month", 30 * SECONDS_IN_A_DAY],
+    [Float::INFINITY, "year", 365 * SECONDS_IN_A_DAY],
+  ].freeze
   MAX_NAME_LENGTH = 50
   PROTECTED_BRANCH_NAMES = ["main", "master"].freeze
 
@@ -32,7 +45,7 @@ class Branch
   end
 
   def recency_color
-    commit_time_color(last_commit_info.first)
+    time_color(last_used_timestamp)
   end
 
   def prompt_text
@@ -46,18 +59,28 @@ class Branch
       @name.ljust(MAX_NAME_LENGTH)
     end
 
-    current? ? decorate_string(name_text, color: commit_time_color(last_commit_info.first)) : name_text
+    current? ? decorate_string(name_text, color: recency_color) : name_text
   end
 
-  def last_commit_timestamp
-    last_commit_info.first || 0
+  # When the branch was last checked out, falling back to its last commit for branches the reflogs
+  # have no checkout of (e.g. one created with `git worktree add -b`). Branches sort by this, and
+  # it's the time shown.
+  def last_used_timestamp
+    @last_used_timestamp ||= CheckoutHistory.timestamps[@name] || last_commit_timestamp || 0
   end
 
   private def time_suffix
-    timestamp, relative_time = last_commit_info
-    return "" if relative_time.empty?
+    return "" if last_used_timestamp.zero?
 
-    decorate_string(relative_time, color: commit_time_color(timestamp))
+    decorate_string(relative_time(last_used_timestamp), color: recency_color)
+  end
+
+  private def relative_time(timestamp)
+    age_in_seconds = [Time.now.to_i - timestamp, 0].max
+    _, unit, seconds_per_unit = RELATIVE_TIME_UNITS.find { |limit, _, _| age_in_seconds < limit }
+    # Round to the nearest unit, as git does
+    count = (age_in_seconds + seconds_per_unit / 2) / seconds_per_unit
+    "#{ count } #{ unit }#{ "s" unless count == 1 } ago"
   end
 
   # Printed on its own line under the branch, indented by the caller to line up with the name
@@ -84,20 +107,13 @@ class Branch
     system("git rev-parse --abbrev-ref #{ @name }@{upstream} >/dev/null 2>&1")
   end
 
-  private def last_commit_info
-    @last_commit_info ||= begin
-      output = `git log -1 --format="%ct|%cr" #{ @name } 2>/dev/null`.strip
-      if output.empty?
-        [nil, ""]
-      else
-        timestamp, relative_time = output.split("|", 2)
-        [timestamp.to_i, relative_time]
-      end
-    end
+  private def last_commit_timestamp
+    output = `git log -1 --format=%ct #{ @name } 2>/dev/null`.strip
+    output.empty? ? nil : output.to_i
   end
 
-  private def commit_time_color(timestamp)
-    return :light_black if timestamp.nil?
+  private def time_color(timestamp)
+    return :light_black if timestamp.zero?
 
     age_in_seconds = Time.now.to_i - timestamp
     if age_in_seconds < SECONDS_IN_A_DAY * 7

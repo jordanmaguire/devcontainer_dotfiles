@@ -5,7 +5,6 @@ rescue LoadError
 end
 
 require_relative "branch"
-require_relative "branch_order"
 
 class BranchSelectionPrompt
   NUMBER_REGEXP = /\A\d+\z/
@@ -16,7 +15,7 @@ class BranchSelectionPrompt
     if exclude_protected_branches
       @branches = @branches.reject(&:protected?)
     end
-    @branches = BranchOrder.sort(@branches)
+    @branches = @branches.sort_by { -_1.last_used_timestamp }
     @prompt_message = decorate_string(prompt_message)
   end
 
