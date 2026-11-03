@@ -5,10 +5,11 @@ rescue LoadError
 end
 
 require_relative "branch"
+require_relative "branch_order"
 
 class BranchList
   def initialize(branches:)
-    @branches = branches.sort_by { -_1.last_commit_timestamp }
+    @branches = BranchOrder.sort(branches)
   end
 
   def display
