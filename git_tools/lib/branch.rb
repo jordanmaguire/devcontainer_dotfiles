@@ -89,7 +89,7 @@ class Branch
   def worktree_text
     return "" unless in_other_worktree?
 
-    decorate_string(@worktree_path.sub(/\A#{Regexp.escape(Dir.home)}(?=\/|\z)/, "~"), color: :cyan)
+    decorate_string(@worktree_path.sub(/\A#{Regexp.escape(Dir.home)}(?=\/|\z)/, "~"), color: :light_black)
   end
 
   private def unpushed_indicator

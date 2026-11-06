@@ -15,7 +15,7 @@ class BranchList
     puts
     @branches.each do |branch|
       puts "#{ indicator(branch) } #{ branch.prompt_text }"
-      puts "  #{ branch.worktree_text }" unless branch.worktree_text.empty?
+      puts "    #{ branch.worktree_text }" unless branch.worktree_text.empty?
     end
     puts
     # Key for the grey branch names, lined up with them
