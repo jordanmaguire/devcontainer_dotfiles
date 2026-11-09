@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/claude/mods/jm-review-picker"
+  },
   "permissions": {
     "allow": [],
     "deny": [
@@ -8,17 +11,7 @@
       "/tmp"
     ]
   },
-  "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/claude/mods/jm-review-picker"
-  },
   "model": "opus[1m]",
-  "remoteControlAtStartup": false,
-  "agentPushNotifEnabled": true,
-  "modelSettings": {
-    "claude-opus-5-5": {
-      "effortLevel": "high"
-    }
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -30,5 +23,12 @@
         ]
       }
     ]
-  }
+  },
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true
 }
