@@ -36,7 +36,7 @@ link_claude_file "$DOTFILES_DIR/claude/CLAUDE.md"     "$CLAUDE_DIR/CLAUDE.md"
 
 echo "Linked Claude config from $DOTFILES_DIR/claude into $CLAUDE_DIR"
 
-# Last on purpose: set -e stops here if SSH or sudo isn't available during bootstrap.
+# Last on purpose: set -e stops here if GitHub credentials or sudo aren't available during bootstrap.
 # Linked into /usr/local/bin because ~/.local/bin isn't on PATH for the SessionStart hook.
 [ -d "$HOME/.dusc/skills" ] || git clone git@github.com:dusc-dev/dusc-skills.git "$HOME/.dusc/skills"
 "$HOME/.dusc/skills/bin/dusc-skills" install
