@@ -70,3 +70,7 @@ __refresh_vscode_ipc() {
   done
 }
 PROMPT_COMMAND="__refresh_vscode_ipc${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+
+# Starship reads this on every prompt, so it works even though `starship init` runs earlier in
+# ~/.bashrc. Pointed into the repo because ~/.config is root-owned in the dev container.
+export STARSHIP_CONFIG="$(dirname "${BASH_SOURCE[0]}")/starship.toml"

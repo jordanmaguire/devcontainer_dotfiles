@@ -1,0 +1,14 @@
+# Starship prompt config, used via STARSHIP_CONFIG in bashrc.additions.sh because ~/.config is
+# root-owned in the dev container. Hides the language/cloud segments so the prompt is just
+# directory, branch and git status.
+[nodejs]
+disabled = true
+
+[ruby]
+disabled = true
+
+[aws]
+disabled = true
+
+[git_status]
+stashed = ""
