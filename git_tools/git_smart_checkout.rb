@@ -13,17 +13,41 @@ def change_to_worktree(branch)
     return
   end
 
+  change_directory_to(branch.worktree_path, "#{ branch.name } is checked out in another worktree:")
+end
+
+def change_directory_to(worktree_path, message)
   # Land in the same subdirectory we're in now (e.g. app/), if the worktree has it
-  destination = File.expand_path(`git rev-parse --show-prefix`.strip, branch.worktree_path)
-  destination = branch.worktree_path unless Dir.exist?(destination)
+  destination = File.expand_path(`git rev-parse --show-prefix`.strip, worktree_path)
+  destination = worktree_path unless Dir.exist?(destination)
 
   if ENV["GCO_CD_FILE"]
     File.write(ENV["GCO_CD_FILE"], destination)
   else
-    puts "#{ branch.name } is checked out in another worktree:"
+    puts message
     puts
     puts "  cd #{ destination }"
   end
+end
+
+# A linked worktree has its own git dir under the main repo's .git/worktrees/, so it differs from
+# the common dir. In the main worktree the two are the same.
+def in_linked_worktree?
+  File.expand_path(`git rev-parse --git-dir`.strip) != File.expand_path(`git rev-parse --git-common-dir`.strip)
+end
+
+# The main worktree is always listed first
+def main_worktree_path
+  `git worktree list --porcelain`.lines.first.delete_prefix("worktree ").strip
+end
+
+# Linked worktrees stay on the branch they were made for, so a fresh checkout goes to the main
+# worktree and we follow it there.
+def checkout_in_main_worktree(branch)
+  main_path = main_worktree_path
+  return unless system("git", "-C", main_path, "checkout", branch.name)
+
+  change_directory_to(main_path, "Checked out #{ branch.name } in the main worktree:")
 end
 
 branches = BranchParser.new(`git branch --format="#{BranchParser::FORMAT}"`).branches
@@ -36,6 +60,8 @@ selected_branch =
 puts
 if selected_branch&.in_other_worktree?
   change_to_worktree(selected_branch)
+elsif selected_branch && in_linked_worktree?
+  checkout_in_main_worktree(selected_branch)
 elsif selected_branch
   `git checkout #{ selected_branch.name }`
 end
