@@ -4,6 +4,9 @@ This repo contains some dotfiles I use in dev containers.
 
 This includes a collection of git tools I created to improve my workflow.
 
+`git_hooks/pre-push` is linked into every repo under `/workspaces`. It refuses any push to `master`,
+and refuses force pushes and remote branch deletions made from a Claude Code shell.
+
 ## Setup
 
 In VS Code

@@ -5,7 +5,10 @@
   "permissions": {
     "allow": [],
     "deny": [
-      "Bash(git push:*)"
+      "Bash(git push *--no-verify*)",
+      "Bash(git ps *--no-verify*)",
+      "Bash(git -C * push *--no-verify*)",
+      "Bash(gp *--no-verify*)"
     ],
     "additionalDirectories": [
       "/tmp"

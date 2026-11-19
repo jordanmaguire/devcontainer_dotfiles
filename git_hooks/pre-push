@@ -1,0 +1,67 @@
+#!/bin/sh
+# Refuses two kinds of push. Linked into each repo's hooks directory by install_dev_container.sh.
+#
+# 1. Any push that would update or delete master, from anyone. master only changes through a
+#    merged pull request. This is the backstop for a branch that tracks origin/master (e.g. one
+#    made with `git worktree add -b my-branch <path> origin/master`) being pushed onto master.
+#
+# 2. From a Claude Code shell (CLAUDECODE is set), any push that rewrites or deletes a ref that
+#    already exists on the remote. Git hands the hook the commit the remote has and the commit it
+#    would get, so this catches --force, -f, --force-with-lease and a +refspec alike. Deleting is
+#    refused too, because delete-then-push is a force push in two steps.
+#
+# `git push --no-verify` skips this hook; claude/settings.json denies Claude that flag.
+
+remote="$1"
+blocked_master=0
+blocked_rewrite=0
+
+is_zero() {
+  case "$1" in
+    *[!0]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/master" ]; then
+    echo "pre-push: refusing to push ${local_ref:-(delete)} to ${remote}/master." >&2
+    blocked_master=1
+    continue
+  fi
+
+  [ -n "${CLAUDECODE:-}" ] || continue
+
+  # A ref the remote does not have yet: nothing to rewrite.
+  if is_zero "$remote_sha"; then
+    continue
+  fi
+
+  if is_zero "$local_sha"; then
+    echo "pre-push: refusing to delete ${remote_ref} on ${remote} from a Claude Code shell." >&2
+    blocked_rewrite=1
+    continue
+  fi
+
+  # Not an ancestor, or a remote commit this clone has not fetched: either way the push would
+  # replace history the remote already has.
+  if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+    echo "pre-push: refusing to rewrite ${remote_ref} on ${remote} from a Claude Code shell." >&2
+    blocked_rewrite=1
+  fi
+done
+
+if [ "$blocked_master" -ne 0 ]; then
+  echo "pre-push: push to a branch with the same name instead, e.g.:" >&2
+  echo "  git branch --unset-upstream && git push -u ${remote} HEAD:refs/heads/\$(git branch --show-current)" >&2
+fi
+
+if [ "$blocked_rewrite" -ne 0 ]; then
+  echo "pre-push: agents do not force push or delete remote refs. Ask the user to run it." >&2
+fi
+
+if [ "$blocked_master" -ne 0 ] || [ "$blocked_rewrite" -ne 0 ]; then
+  exit 1
+fi
+
+exit 0
