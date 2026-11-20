@@ -15,7 +15,7 @@ class BranchSelectionPrompt
     if exclude_protected_branches
       @branches = @branches.reject(&:protected?)
     end
-    @branches = @branches.sort_by { -_1.last_used_timestamp }
+    @branches = Branch.in_display_order(@branches)
     @prompt_message = decorate_string(prompt_message)
   end
 

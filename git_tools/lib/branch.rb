@@ -30,6 +30,12 @@ class Branch
 
   attr_reader :name, :worktree_path
 
+  # The order branches are listed in: main/master first, so it's always the same number to type,
+  # then the rest by how recently they were used
+  def self.in_display_order(branches)
+    branches.sort_by { [_1.protected? ? 0 : 1, -_1.last_used_timestamp] }
+  end
+
   def protected?
     PROTECTED_BRANCH_NAMES.include?(@name)
   end
@@ -65,7 +71,8 @@ class Branch
   end
 
   # When the branch was last checked out, falling back to its last commit for branches the reflogs
-  # have no checkout of (e.g. one created with `git worktree add -b`). Branches sort by this, and
+  # have no checkout of (e.g. one created with `git worktree add -b`). Branches sort by this (after
+  # main/master, see .in_display_order), and
   # it's the time shown.
   def last_used_timestamp
     @last_used_timestamp ||= CheckoutHistory.timestamps[@name] || last_commit_timestamp || 0

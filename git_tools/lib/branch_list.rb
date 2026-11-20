@@ -8,7 +8,7 @@ require_relative "branch"
 
 class BranchList
   def initialize(branches:)
-    @branches = branches.sort_by { -_1.last_used_timestamp }
+    @branches = Branch.in_display_order(branches)
   end
 
   def display
