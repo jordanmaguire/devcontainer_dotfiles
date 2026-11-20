@@ -14,7 +14,6 @@ alias cucu="cucumber"
 # Short for "commits since master".
 alias csm="git log master..HEAD --oneline"
 alias ga="git add"
-alias gcom="git checkout master"
 alias gcop="git checkout -"
 alias gd="git diff"
 alias gl="git log"
@@ -36,17 +35,23 @@ alias gsl="~/dotfiles/git_tools/git_smart_log.rb"
 alias gsd="~/dotfiles/git_tools/git_smart_branch_destroy.rb"
 alias gsp="~/dotfiles/git_tools/git_smart_prune.rb"
 # gco is a function rather than an alias so that picking a branch checked out in another worktree
-# can cd you into that worktree, which the script can't do to its parent shell.
+# can cd you into that worktree, which the script can't do to its parent shell. Give it a branch
+# name to skip the prompt.
 unalias gco 2>/dev/null
 gco() {
   local cd_file destination
   cd_file=$(mktemp)
-  GCO_CD_FILE="$cd_file" ~/dotfiles/git_tools/git_smart_checkout.rb
+  GCO_CD_FILE="$cd_file" ~/dotfiles/git_tools/git_smart_checkout.rb "$@"
   destination=$(cat "$cd_file")
   rm -f "$cd_file"
   if [ -n "$destination" ]; then
     cd "$destination" || return
   fi
+}
+# Same as picking master in gco, so from a linked worktree it takes you back to the main one.
+unalias gcom 2>/dev/null
+gcom() {
+  gco master
 }
 # TODO: I have no idea where this tool went. I evidently deleted the code for it.
 #       I can see use for this - maybe it shows the branches in your current tree first and then

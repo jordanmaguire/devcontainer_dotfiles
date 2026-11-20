@@ -51,11 +51,17 @@ def checkout_in_main_worktree(branch)
 end
 
 branches = BranchParser.new(`git branch --format="#{BranchParser::FORMAT}"`).branches
+# Given a branch name (as `gcom` does with master) we skip the prompt and go straight to it
+requested_branch_name = ARGV.first
 selected_branch =
-  BranchSelectionPrompt.new(
-    branches: branches,
-    prompt_message: "Checkout a branch:",
-  ).prompt_for_branch_selection
+  if requested_branch_name
+    branches.find { _1.name == requested_branch_name } || abort("No branch named #{ requested_branch_name }")
+  else
+    BranchSelectionPrompt.new(
+      branches: branches,
+      prompt_message: "Checkout a branch:",
+    ).prompt_for_branch_selection
+  end
 
 puts
 if selected_branch&.in_other_worktree?
@@ -63,5 +69,5 @@ if selected_branch&.in_other_worktree?
 elsif selected_branch && in_linked_worktree?
   checkout_in_main_worktree(selected_branch)
 elsif selected_branch
-  `git checkout #{ selected_branch.name }`
+  system("git", "checkout", selected_branch.name)
 end
